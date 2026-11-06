@@ -348,7 +348,7 @@
         });
     }
 
-    const KEYBOARD_VERSION = '3.74.4';
+    const KEYBOARD_VERSION = '3.74.5';
     // #39-12 收口：整屏级互斥视图注册表（单一事实源）。统计浮层、
     // 定制面板两轮同款叠层事故的根因是互关调用散装在各个 toggle 里，
     // 新视图忘了关所有人就叠加。现在：新视图在此登记一次（怎么判开、
@@ -1685,6 +1685,7 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
             // 没有该字段时保持默认档 = 原始 13px 悬浮带）。加粗开关默认关。
             this.preeditFont = 0;
             this.preeditBold = false;
+            this.preeditFrame = false;
             // 单手模式（issue #15）：0=关 1=左手（键区贴左）2=右手；侧边条
             // 内容 0=光标控制 1=空白。背景图片（原「侧边图片」升级）：铺满
             // 整个键盘区域，bgImageEnabled 控制展示。
@@ -2303,7 +2304,10 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
             document.getElementById('expandGrid').addEventListener('scroll', () => this.maybeLoadMoreCandidates());
             // The collapsed bar shares the pool - swiping it
             // near its end pulls the next page too.
-            document.getElementById('candidates').addEventListener('scroll', () => this.maybeLoadMoreCandidates());
+            document.getElementById('candidates').addEventListener('scroll', () => {
+                this.maybeLoadMoreCandidates();
+                this.schedulePinyinAlign();
+            });
             // Word-frequency vs single-char filter tabs.
             document.querySelectorAll('[data-expand-tab]').forEach(button => {
                 button.addEventListener('click', () => {
@@ -10225,6 +10229,106 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
             // A pool shorter than the bar can never be scrolled, so keep
             // pulling pages until the strip overflows (endless drag ready).
             if (!this.expanded) this.maybeLoadMoreCandidates();
+            this.schedulePinyinAlign();
+        }
+
+        /** 全拼切成音节。已是完整音节的取最长，切不开的字母单独留下。 */
+        pinyinPieces(raw) {
+            const text = String(raw || '').trim();
+            if (!text) return [];
+            if (this.mode === 't9') {
+                const reading = this.t9Reading();
+                return reading ? reading.split(/['\s]+/).filter(Boolean) : [];
+            }
+            if (this.mode === 'double-pinyin') {
+                const compact = text.replace(/[^a-z]/gi, '');
+                const out = [];
+                for (let i = 0; i < compact.length; i += 2) out.push(compact.slice(i, i + 2));
+                return out;
+            }
+            if (this.mode !== 'pinyin') return [];
+            const out = [];
+            const chunks = text.split(/[^a-zA-Züv]+/);
+            chunks.forEach(chunk => {
+                const lower = chunk.toLowerCase();
+                let i = 0;
+                while (i < lower.length) {
+                    let best = 0;
+                    const max = Math.min(6, lower.length - i);
+                    for (let len = 1; len <= max; len++) {
+                        const slice = lower.slice(i, i + len);
+                        if (FULL_PINYIN_SYLLABLES_SET.has(slice)) best = len;
+                        else if (!FULL_PINYIN_SYLLABLES.some(value => value.startsWith(slice))) break;
+                    }
+                    if (best) {
+                        out.push(lower.slice(i, i + best));
+                        i += best;
+                    } else {
+                        out.push(lower.slice(i, i + 1));
+                        i += 1;
+                    }
+                }
+            });
+            return out;
+        }
+
+        schedulePinyinAlign() {
+            if (typeof requestAnimationFrame !== 'function') return;
+            if (this._pyAlign) cancelAnimationFrame(this._pyAlign);
+            this._pyAlign = requestAnimationFrame(() => this.alignPinyin());
+        }
+
+        /** 每个音节落在对应汉字正上方，不再整串贴在键盘最左边。 */
+        alignPinyin() {
+            this._pyAlign = 0;
+            const line = document.getElementById('preeditLine');
+            if (!line) return;
+            line.querySelectorAll('.py-slot').forEach(node => node.remove());
+            line.classList.remove('aligned');
+            document.body.classList.remove('preedit-aligned');
+            document.querySelectorAll('.ruby-target').forEach(node => node.classList.remove('ruby-target'));
+            if (!this.composing || this.preeditFrame) return;
+            const rawEl = line.querySelector('.preedit-raw');
+            const pieces = this.pinyinPieces(rawEl ? rawEl.textContent : '');
+            const cand = document.querySelector('#candidates .candidate');
+            const host = document.getElementById('softKeyboard');
+            if (!pieces.length || !cand || !host || !cand.firstChild || cand.firstChild.nodeType !== 3) return;
+            cand.classList.add('ruby-target');
+            void cand.offsetWidth;
+            const hostRect = host.getBoundingClientRect();
+            if (!hostRect.width) return;
+            const chars = Array.from(cand.textContent);
+            const node = cand.firstChild;
+            const range = document.createRange();
+            let placed = 0;
+            pieces.forEach((piece, index) => {
+                let center = null;
+                if (index < chars.length) {
+                    const start = chars.slice(0, index).join('').length;
+                    const end = start + chars[index].length;
+                    if (end <= node.length) {
+                        range.setStart(node, start);
+                        range.setEnd(node, end);
+                        const rect = range.getBoundingClientRect();
+                        if (rect.width > 0) center = rect.left + rect.width / 2 - hostRect.left;
+                    }
+                }
+                if (center == null) {
+                    const rect = cand.getBoundingClientRect();
+                    center = rect.right - hostRect.left + 16 + (index - chars.length) * 28;
+                }
+                const slot = document.createElement('span');
+                slot.className = 'py-slot';
+                slot.setAttribute('aria-hidden', 'true');
+                slot.textContent = piece;
+                slot.style.left = Math.max(12, Math.min(hostRect.width - 12, center)) + 'px';
+                line.append(slot);
+                placed += 1;
+            });
+            if (placed) {
+                line.classList.add('aligned');
+                document.body.classList.add('preedit-aligned');
+            }
         }
 
         /** M4 composing chrome: preedit line, toolbar swap, enter label. */
@@ -10272,12 +10376,21 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
             // 回声未到时 raw 仍不含 *，会放进第二个 *）。
             this.wildcardInFlight = false;
             document.body.classList.toggle('composing', this.composing);
+            document.body.classList.toggle('preedit-frame', !!this.preeditFrame);
             const preedit = document.getElementById('preeditLine');
-            preedit.textContent = this.composing
+            const reading = this.composing
                 ? (this.mode === 't9'
                     ? (this.t9Reading() || this.t9PreeditLabel(this.lastRawInput))
                     : this.lastRawInput)
                 : '';
+            preedit.replaceChildren();
+            if (reading) {
+                const raw = document.createElement('span');
+                raw.className = 'preedit-raw';
+                raw.textContent = reading;
+                preedit.append(raw);
+            }
+            this.schedulePinyinAlign();
             if (!this.composing) {
                 this.t9ConfirmedLen = 0;
                 this._t9ConfirmedText = '';
@@ -11497,7 +11610,11 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
             if (typeof payload.preeditBold === 'boolean') {
                 this.preeditBold = payload.preeditBold;
             }
+            if (typeof payload.preeditFrame === 'boolean') {
+                this.preeditFrame = payload.preeditFrame;
+            }
             document.body.dataset.preeditBold = this.preeditBold ? '1' : '0';
+            document.body.classList.toggle('preedit-frame', !!this.preeditFrame);
             // 单手模式（issue #15）：0=关 1=左手 2=右手；旧 APK 不带字段不覆盖。
             if (Number(payload.oneHand) in { 0: 1, 1: 1, 2: 1 }) {
                 this.oneHand = Number(payload.oneHand);
@@ -12645,6 +12762,7 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
         // Suite hook: the real theme-switch entry (toolbar tool / quick
         // tile route through it too).
         cycleTheme: () => keyboard.cycleTheme(),
+        pinyinPieces: raw => keyboard.pinyinPieces(raw),
         // Suite/preview hook: re-evaluate the theme→image mapping after
         // switching html theme classes directly (applyTheme does this in
         // real flows).

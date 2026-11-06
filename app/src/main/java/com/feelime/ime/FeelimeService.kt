@@ -2559,6 +2559,7 @@ class FeelimeService : InputMethodService(), AsrEngine.Listener, InkEngineListen
             .put("userFontDigest", KeyboardFontStore.current(this)?.digest ?: "")
             .put("preeditFont", preeditFont())
             .put("preeditBold", readPreeditBold(this))
+            .put("preeditFrame", readPreeditFrame(this))
             .put("oneHand", readOneHand(this))
             .put("oneHandPad", readOneHandPad(this))
             .put("oneHandSide", readOneHandSide(this))
@@ -3424,6 +3425,11 @@ class FeelimeService : InputMethodService(), AsrEngine.Listener, InkEngineListen
                 "preeditBold" -> {
                     val on = boolArg() ?: return@guarded
                     keyboardPrefs.edit().putBoolean(PREF_PREEDIT_BOLD, on).commit()
+                    ACTION_KEYBOARD_PREFS_CHANGED
+                }
+                "preeditFrame" -> {
+                    val on = boolArg() ?: return@guarded
+                    keyboardPrefs.edit().putBoolean(PREF_PREEDIT_FRAME, on).commit()
                     ACTION_KEYBOARD_PREFS_CHANGED
                 }
                 "keyOpacity" -> {

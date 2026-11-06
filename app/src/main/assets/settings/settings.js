@@ -818,6 +818,8 @@ const I18N = {
         "input.feel.glassRadiusHint": "键帽和浮层的圆角。越大越圆。",
         "input.feel.panelOpacity": "面板透明度",
         "input.feel.panelOpacityHint": "候选条、菜单和语音卡片有多透。文字保持实色，方便看清。",
+        "input.feel.preeditFrame": "拼音外框",
+        "input.feel.preeditFrameHint": "给正在输入的拼音再套一个随字数收缩的框。默认关，拼音直接写在对应汉字上方。",
         "skin.liuli": "琉璃青",
         "skin.ocean": "深海",
         "skin.violet": "暮紫",
@@ -1658,6 +1660,8 @@ const I18N = {
         "input.feel.glassRadiusHint": "Corner radius of keys and popups. Higher is rounder.",
         "input.feel.panelOpacity": "Panel opacity",
         "input.feel.panelOpacityHint": "How solid the candidate bar, menus, and voice card are. Text stays opaque.",
+        "input.feel.preeditFrame": "Pinyin outline",
+        "input.feel.preeditFrameHint": "Draw an extra box that shrinks around the composing pinyin. Off by default; pinyin sits above each character.",
         "skin.liuli": "Liuli",
         "skin.ocean": "Deep sea",
         "skin.violet": "Dusk",
@@ -2795,6 +2799,7 @@ function renderFeel(state) {
     }
     setToggle("keyHaptic", state.keyHaptic);
     setToggle("preeditBold", state.preeditBold);
+    setToggle("preeditFrame", state.preeditFrame);
 }
 
 /** 双拼方案 + 键位图（dp-data.js 的 window.FeelimeDp 提供各方案键位）。 */
@@ -4250,6 +4255,7 @@ $("btnClearFont").addEventListener("click", () => {
 });
 $("preeditFont").addEventListener("change", event => call("setPreeditFont", parseInt(event.target.value, 10)));
 $("preeditBold").addEventListener("change", event => call("setPreeditBold", event.target.checked));
+$("preeditFrame").addEventListener("change", event => call("setPreeditFrame", event.target.checked));
 $("oneHand").addEventListener("change", event => call("setOneHandMode", parseInt(event.target.value, 10)));
 $("oneHandPad").addEventListener("change", event => call("setOneHandPad", parseInt(event.target.value, 10)));
 $("sideContent").addEventListener("change", event => call("setSideContent", parseInt(event.target.value, 10)));

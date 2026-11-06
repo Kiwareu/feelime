@@ -34,20 +34,21 @@
      * --key-alpha（0-1），键帽文字保持实色。 */
     /* 液态玻璃：键帽默认略透（文字仍实色）。用户「按键不透明度」
      * 仍写这个变量，100 = 完全实心。 */
-    --key-alpha: 0.72;
-    /* 面板很透：色和壁纸从键缝里透出来。候选首词仍用较实的 pill。 */
-    --panel-alpha: 0.42;
-    --glass-blur: 26px;
-    --sheet-top: rgba(18, 24, 28, .28);
-    --sheet-bottom: rgba(10, 14, 18, .38);
+    --key-alpha: 0.86;
+    /* 面板通透度仍由设置控制。底板另有一层更厚的霜，避免页面文字穿透。 */
+    --panel-alpha: 0.72;
+    --glass-blur: 28px;
+    --sheet-top: hsl(var(--bg-hue) calc(36% * var(--bg-sat, 1)) 22% / .90);
+    --sheet-bottom: hsl(var(--bg-hue) calc(30% * var(--bg-sat, 1)) 12% / .94);
+    --bar-l: 18%;
     --glass-sheen: rgba(255, 255, 255, .55);
     --glass-edge: rgba(255, 255, 255, .28);
-    --glass-veil: rgba(8, 16, 20, .18);
-    --glass-veil-2: rgba(8, 16, 20, .28);
+    --glass-veil: hsl(var(--bg-hue) calc(28% * var(--bg-sat, 1)) 16% / .72);
+    --glass-veil-2: hsl(var(--bg-hue) calc(24% * var(--bg-sat, 1)) 10% / .82);
     --bg: hsl(var(--bg-hue) calc(22% * var(--bg-sat, 1)) calc(12% + (100% - 12%) * 0.35 * var(--bg-lt, 0)));
-    --key: hsl(var(--key-hue) calc(6% * var(--key-sat, 1)) calc(34% + (100% - 34%) * 0.75 * var(--key-lt, 0)) / calc(var(--key-alpha) * 0.82));
-    --special: hsl(var(--key-hue) calc(8% * var(--key-sat, 1)) calc(24% + (100% - 24%) * 0.75 * var(--key-lt, 0)) / calc(var(--key-alpha) * 0.82));
-    --pressed: hsl(var(--key-hue) calc(6% * var(--key-sat, 1)) calc(42% + (100% - 42%) * 0.75 * var(--key-lt, 0)) / calc(var(--key-alpha) * 0.82));
+    --key: hsl(var(--key-hue) calc(22% * var(--key-sat, 1)) calc(34% + (100% - 34%) * 0.75 * var(--key-lt, 0)) / var(--key-alpha));
+    --special: hsl(var(--key-hue) calc(18% * var(--key-sat, 1)) calc(24% + (100% - 24%) * 0.75 * var(--key-lt, 0)) / var(--key-alpha));
+    --pressed: hsl(var(--key-hue) calc(22% * var(--key-sat, 1)) calc(42% + (100% - 42%) * 0.75 * var(--key-lt, 0)) / var(--key-alpha));
     --text: #e8e8e8;
     --muted: #b0b0b0;
     --accent: hsl(var(--key-hue) calc(62% * var(--key-sat, 1)) calc(48% + (100% - 48%) * 0.75 * var(--key-lt, 0)));
@@ -75,9 +76,9 @@
 
 html.theme-light {
     color-scheme: light;
-    --key: hsl(var(--key-hue) calc(10% * var(--key-sat, 1)) calc(99% + (100% - 99%) * 0.75 * var(--key-lt, 0)) / var(--key-alpha));
-    --special: hsl(var(--key-hue) calc(14% * var(--key-sat, 1)) calc(94% + (100% - 94%) * 0.75 * var(--key-lt, 0)) / var(--key-alpha));
-    --pressed: hsl(var(--key-hue) calc(12% * var(--key-sat, 1)) calc(90% + (100% - 90%) * 0.75 * var(--key-lt, 0)) / var(--key-alpha));
+    --key: hsl(var(--key-hue) calc(38% * var(--key-sat, 1)) calc(96% + (100% - 96%) * 0.75 * var(--key-lt, 0)) / var(--key-alpha));
+    --special: hsl(var(--key-hue) calc(32% * var(--key-sat, 1)) calc(90% + (100% - 90%) * 0.75 * var(--key-lt, 0)) / var(--key-alpha));
+    --pressed: hsl(var(--key-hue) calc(36% * var(--key-sat, 1)) calc(86% + (100% - 86%) * 0.75 * var(--key-lt, 0)) / var(--key-alpha));
     --bg: hsl(var(--bg-hue) calc(32% * var(--bg-sat, 1)) calc(88% + (100% - 88%) * 0.35 * var(--bg-lt, 0)));
     --text: #181818;
     /* The old #b0b0b0 sat at ~2.1:1 on the light surfaces -
@@ -105,12 +106,13 @@ html.theme-light {
     --line: hsl(var(--bg-hue) calc(26% * var(--bg-sat, 1)) calc(82% + (100% - 82%) * 0.35 * var(--bg-lt, 0)));
     --scrim: #ffffffb0;
     --mod-active-bg: hsl(var(--key-hue) calc(55% * var(--key-sat, 1)) calc(89% + (100% - 89%) * 0.75 * var(--key-lt, 0)));
-    --sheet-top: rgba(255, 255, 255, .30);
-    --sheet-bottom: rgba(255, 255, 255, .16);
+    --bar-l: 96%;
+    --sheet-top: hsl(var(--bg-hue) calc(48% * var(--bg-sat, 1)) 97% / .90);
+    --sheet-bottom: hsl(var(--bg-hue) calc(42% * var(--bg-sat, 1)) 90% / .84);
     --glass-sheen: rgba(255, 255, 255, .92);
-    --glass-edge: rgba(255, 255, 255, .62);
-    --glass-veil: rgba(255, 255, 255, .22);
-    --glass-veil-2: rgba(255, 255, 255, .08);
+    --glass-edge: rgba(255, 255, 255, .55);
+    --glass-veil: hsl(var(--bg-hue) calc(40% * var(--bg-sat, 1)) 96% / .78);
+    --glass-veil-2: hsl(var(--bg-hue) calc(36% * var(--bg-sat, 1)) 90% / .86);
 }
 
 /* ===== #31 预置色调：六预置=六个固定 --kb-hue（classic=默认绿 160），
@@ -133,9 +135,9 @@ html.theme-dark {
 @media (prefers-color-scheme: light) {
     html:not(.theme-light):not(.theme-dark) {
         color-scheme: light;
-        --key: hsl(var(--key-hue) calc(10% * var(--key-sat, 1)) calc(99% + (100% - 99%) * 0.75 * var(--key-lt, 0)) / var(--key-alpha));
-        --special: hsl(var(--key-hue) calc(14% * var(--key-sat, 1)) calc(94% + (100% - 94%) * 0.75 * var(--key-lt, 0)) / var(--key-alpha));
-        --pressed: hsl(var(--key-hue) calc(12% * var(--key-sat, 1)) calc(90% + (100% - 90%) * 0.75 * var(--key-lt, 0)) / var(--key-alpha));
+        --key: hsl(var(--key-hue) calc(38% * var(--key-sat, 1)) calc(96% + (100% - 96%) * 0.75 * var(--key-lt, 0)) / var(--key-alpha));
+        --special: hsl(var(--key-hue) calc(32% * var(--key-sat, 1)) calc(90% + (100% - 90%) * 0.75 * var(--key-lt, 0)) / var(--key-alpha));
+        --pressed: hsl(var(--key-hue) calc(36% * var(--key-sat, 1)) calc(86% + (100% - 86%) * 0.75 * var(--key-lt, 0)) / var(--key-alpha));
         --bg: hsl(var(--bg-hue) calc(32% * var(--bg-sat, 1)) calc(88% + (100% - 88%) * 0.35 * var(--bg-lt, 0)));
         --text: #181818;
         --muted: #5c616b; /* See html.theme-light */
@@ -158,12 +160,13 @@ html.theme-dark {
         --line: hsl(var(--bg-hue) calc(26% * var(--bg-sat, 1)) calc(82% + (100% - 82%) * 0.35 * var(--bg-lt, 0)));
         --scrim: #ffffffb0;
         --mod-active-bg: hsl(var(--key-hue) calc(55% * var(--key-sat, 1)) calc(89% + (100% - 89%) * 0.75 * var(--key-lt, 0)));
-        --sheet-top: rgba(255, 255, 255, .30);
-        --sheet-bottom: rgba(255, 255, 255, .16);
+        --bar-l: 96%;
+        --sheet-top: hsl(var(--bg-hue) calc(48% * var(--bg-sat, 1)) 97% / .90);
+        --sheet-bottom: hsl(var(--bg-hue) calc(42% * var(--bg-sat, 1)) 90% / .84);
         --glass-sheen: rgba(255, 255, 255, .92);
-        --glass-edge: rgba(255, 255, 255, .62);
-        --glass-veil: rgba(255, 255, 255, .22);
-        --glass-veil-2: rgba(255, 255, 255, .08);
+        --glass-edge: rgba(255, 255, 255, .55);
+        --glass-veil: hsl(var(--bg-hue) calc(40% * var(--bg-sat, 1)) 96% / .78);
+        --glass-veil-2: hsl(var(--bg-hue) calc(36% * var(--bg-sat, 1)) 90% / .86);
     }
 }
 
@@ -223,10 +226,13 @@ button { font: inherit; }
      * mirrors the same growth so the row budget shrinks instead of
      * overflowing. */
     padding: var(--preedit-band, 18px) 10px calc(8px + var(--safe-bottom, 0px) + var(--kb-bottom-pad, 0px));
-    /* 底板交给 #glassField。这里保持透明，壁纸和色块才能从键缝透出来。
-     * 底部大圆角：系统导航/输入法切换条在 --safe-bottom 里，键区停在它上面，
-     * 卡片下沿仍是圆的，不另画地球仪或收起键。 */
-    background: transparent;
+    /* 一整块厚霜玻璃：色相来自皮肤，模糊把背后的页面打成光，填色挡住正文。
+     * 底部大圆角：系统导航/输入法切换条在 --safe-bottom 里，键区停在它上面。 */
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, .38), transparent 22%),
+        linear-gradient(180deg, var(--sheet-top), var(--sheet-bottom));
+    -webkit-backdrop-filter: blur(var(--glass-blur, 28px)) saturate(1.45);
+    backdrop-filter: blur(var(--glass-blur, 28px)) saturate(1.45);
     border-radius: 26px 26px var(--radius-sheet, 32px) var(--radius-sheet, 32px);
     /* clip, not hidden: a focused editor-strip input auto-SCROLLS a
        hidden-overflow container (programmatic scroll), shoving every
@@ -370,24 +376,51 @@ body.landscape #symCatBar { margin-top: 3px; gap: 4px; }
     display: none;
     position: absolute;
     top: 0;
-    left: 8px;
+    left: 0;
+    right: 0;
     min-height: var(--preedit-band, 18px);
-    max-width: calc(100% - 16px);
-    overflow: hidden;
+    overflow: visible;
     white-space: nowrap;
-    text-overflow: ellipsis;
     align-items: center;
-    /* Raw pinyin must be legible at a glance (review note b). */
     font-size: calc(13px * var(--preedit-font-scale, 1));
     line-height: normal;
     color: var(--text);
     z-index: 5;
+    pointer-events: none;
 }
-body.composing #preeditLine {
-    display: flex;
+body.composing #preeditLine { display: block; }
+/* 默认不给拼音套一层跟着字数收缩的框。打开「拼音外框」才恢复胶囊。 */
+body.preedit-frame.composing #preeditLine {
+    left: 8px;
+    right: auto;
+    display: inline-flex;
+    width: auto;
+    max-width: calc(100% - 16px);
     padding: 0 8px;
     border-radius: 999px;
+    overflow: hidden;
     background: hsl(var(--bg-hue) calc(18% * var(--bg-sat, 1)) 50% / .28);
+}
+body.composing.preedit-aligned:not(.preedit-frame) .preedit-raw {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+}
+.py-slot {
+    position: absolute;
+    bottom: 0;
+    transform: translateX(-50%);
+    font-size: calc(11px * var(--preedit-font-scale, 1));
+    line-height: 1;
+    color: var(--text);
+    white-space: nowrap;
+}
+#candidates .candidate.ruby-target {
+    letter-spacing: 0.7em;
+    padding-left: 12px;
+    padding-right: 14px;
 }
 
 /* ===== 单手模式（issue #15）=====
@@ -614,29 +647,27 @@ body[data-side-content="blank"] #sideGrid { display: none; }
 }
 body[data-bg-image="on"] #bgImage { display: block; }
 body[data-bg-image="on"] #softKeyboard { background: transparent; }
-/* 液态玻璃底：色相渐变先模糊成水纹，键帽再以半透+高光浮在上面。
- * 有壁纸时改成薄色罩，模糊交给 #bgImage（一张图只模糊一次）。 */
+/* 水光只铺在同一块霜面上，不再另用固定的橙/青/绿把皮肤色盖掉。 */
 #glassField {
     position: absolute;
-    inset: -18%;
+    inset: 0;
     z-index: -1;
     pointer-events: none;
-    /* 暖橙 / 青绿 / 薄荷三团色，再罩一层很薄的霜。模糊后像隔着毛玻璃看壁纸。 */
     background:
-        radial-gradient(52% 46% at 8% 8%, rgba(255, 168, 92, .62), transparent 70%),
-        radial-gradient(48% 52% at 92% 16%, rgba(56, 196, 186, .55), transparent 68%),
-        radial-gradient(60% 48% at 48% 108%, rgba(126, 214, 146, .5), transparent 72%),
-        linear-gradient(180deg, var(--sheet-top), var(--sheet-bottom));
-    filter: blur(var(--glass-blur, 26px));
+        linear-gradient(180deg, var(--glass-sheen), transparent 24%),
+        radial-gradient(70% 42% at 50% -8%, rgba(255, 255, 255, .42), transparent 68%);
+}
+body[data-bg-image="on"] #softKeyboard {
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, .28), transparent 24%),
+        linear-gradient(180deg, var(--glass-veil), var(--glass-veil-2));
 }
 body[data-bg-image="on"] #glassField {
-    inset: 0;
-    filter: none;
-    background: linear-gradient(180deg, var(--glass-veil), var(--glass-veil-2));
+    background: linear-gradient(180deg, rgba(255, 255, 255, .34), transparent 30%);
 }
 body[data-bg-image="on"] #bgImage {
-    filter: blur(var(--glass-blur, 16px));
-    transform: scale(1.12);
+    filter: blur(calc(var(--glass-blur, 28px) + 10px));
+    transform: scale(1.14);
 }
 /* 拼音加粗（issue #8）：设置开关，默认关。 */
 body[data-preedit-bold="1"] #preeditLine { font-weight: 600; }
@@ -657,7 +688,7 @@ body[data-preedit-font="xlarge"] { --preedit-font-scale: 1.35; --preedit-band: 2
     margin-bottom: 10px;
     padding: 0 4px;
     border-radius: calc(var(--radius-key) + 6px);
-    background: hsl(var(--bg-hue) calc(20% * var(--bg-sat, 1)) 50% / calc(var(--panel-alpha) * .55));
+    background: hsl(var(--bg-hue) calc(34% * var(--bg-sat, 1)) var(--bar-l, 50%) / calc(0.7 + var(--panel-alpha) * 0.26));
     box-shadow: inset 0 1px 0 var(--glass-sheen);
 }
 .clip-groups { display: flex; flex-wrap: wrap; gap: 6px; padding: 2px 2px 8px; }

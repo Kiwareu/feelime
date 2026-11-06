@@ -110,10 +110,16 @@ fun readPreeditFont(context: Context): Int =
 
 /** 拼音加粗开关（issue #8）：默认关。 */
 const val PREF_PREEDIT_BOLD = "preedit_bold"
+const val PREF_PREEDIT_FRAME = "preedit_frame"
 
 fun readPreeditBold(context: Context): Boolean =
     context.getSharedPreferences(KEYBOARD_PREFS_FILE, Context.MODE_PRIVATE)
         .getBoolean(PREF_PREEDIT_BOLD, false)
+
+/** 拼音外框：随字数收缩的胶囊。默认关。 */
+fun readPreeditFrame(context: Context): Boolean =
+    context.getSharedPreferences(KEYBOARD_PREFS_FILE, Context.MODE_PRIVATE)
+        .getBoolean(PREF_PREEDIT_FRAME, false)
 
 /** 单手模式（issue #15）：0=关 1=左手（键区贴左，侧边条在右） 2=右手。 */
 const val PREF_ONE_HAND = "one_hand"
@@ -959,6 +965,7 @@ class SettingsBridge(
             })
             .put("preeditFont", readPreeditFont(context))
             .put("preeditBold", readPreeditBold(context))
+            .put("preeditFrame", readPreeditFrame(context))
             .put("oneHand", readOneHand(context))
             .put("oneHandPad", readOneHandPad(context))
             .put("oneHandSide", readOneHandSide(context))
@@ -1655,6 +1662,17 @@ class SettingsBridge(
     fun setPreeditBold(bold: Boolean, token: String) = guarded(token) {
         context.getSharedPreferences(KEYBOARD_PREFS_FILE, Context.MODE_PRIVATE)
             .edit().putBoolean(PREF_PREEDIT_BOLD, bold).commit()
+        context.sendBroadcast(
+            Intent(ACTION_KEYBOARD_PREFS_CHANGED).setPackage(context.packageName),
+        )
+        pushState()
+    }
+
+    /** 拼音外框（皮肤页）：默认关。开了才给拼音套随字数收缩的胶囊。 */
+    @JavascriptInterface
+    fun setPreeditFrame(on: Boolean, token: String) = guarded(token) {
+        context.getSharedPreferences(KEYBOARD_PREFS_FILE, Context.MODE_PRIVATE)
+            .edit().putBoolean(PREF_PREEDIT_FRAME, on).commit()
         context.sendBroadcast(
             Intent(ACTION_KEYBOARD_PREFS_CHANGED).setPackage(context.packageName),
         )

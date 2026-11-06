@@ -6103,6 +6103,14 @@ test('japanese mode keeps qwerty; space stays mic-only', () => {
 
 // ---------------------------------------------------------------- C candidates
 
+test('pinyin splits into one syllable per character', () => {
+    const world = fresh({ mode: 'pinyin' });
+    const pieces = raw => world.context.window.Feelime.pinyinPieces(raw).join(' ');
+    equal(pieces('nihao'), 'ni hao', 'nihao');
+    equal(pieces('zhongguo'), 'zhong guo', 'zhongguo');
+    equal(pieces('n'), 'n', 'incomplete syllable stays visible');
+});
+
 test('C2/C3/C7 candidates render, choose and page with revision', () => {
     const world = fresh();
     world.engineState({

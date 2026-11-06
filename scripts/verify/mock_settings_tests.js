@@ -2737,7 +2737,8 @@ test('skin page row order: tints, saturations, hex codes, opacity, backgrounds, 
     // hue/sat/hex/不透明度）→ 预览。开关行内首控件是 keyFollow。
     equal(ids, ['themeHue', 'themeSat', 'themeHexSwatch', 'bgImageLight',
         'bgImageDark', 'keyFollow', 'keyHue', 'keySat', 'keyHexSwatch',
-        'keyOpacity', 'themePreview', 'glassBlur', 'glassRadius', 'panelOpacity'],
+        'keyOpacity', 'themePreview', 'glassBlur', 'glassRadius', 'panelOpacity',
+        'preeditFrame'],
         'rows follow the agreed order');
 });
 
