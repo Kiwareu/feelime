@@ -7008,15 +7008,13 @@ test('remove and clear clipboard hit the bridge with hex ids', () => {
     equal(world.native.of('clearClipboard').length, 1, 'clearClipboard called');
 });
 
-test('clipboard badge shows the count; a mixed clip can paste just the link', {since: '3.74.2'}, () => {
+test('a mixed clip can paste just the link', {since: '3.74.2'}, () => {
     const world = fresh();
     world.clipboard([
         { id: 'a1', time: 1, text: '订单号 13800138000 详见 https://example.com/a 谢谢' },
         { id: 'b2', time: 2, text: '另一条', group: '工作' },
     ], ['工作']);
-    const badge = world.$('clipboardButton').querySelector('.clip-count');
-    equal(badge.hidden, false, 'count badge visible');
-    equal(badge.textContent, '2', 'count is the number of clips');
+    assert(!world.$('clipboardButton').querySelector('.clip-count'), 'toolbar has no count badge');
     world.tap(world.$('clipboardButton'));
     const link = [...world.document.querySelectorAll('.clip-extract')]
         .find(node => /example\.com/.test(node.textContent));

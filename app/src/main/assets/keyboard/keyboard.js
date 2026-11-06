@@ -218,7 +218,7 @@
         "拖动排序": "Drag to reorder",
         "暂无单字": "No single-character candidates",
         "暂无候选": "No candidates",
-        "剪贴板只留在这台手机上，复制的内容会出现在这里": "Clipboard stays on this phone. Copied text shows up here.",
+        "剪贴板只留在这台手机上，不上传、不进云备份。条数不另设上限；全部正文大约 32MB，再大就存不下。": "Clipboard stays on this phone. It is not uploaded and is not in cloud backup. There is no fixed item cap; about 32MB of text total is the on-device ceiling.",
         "全部": "All",
         "未分组": "Ungrouped",
         "＋分组": "＋ Group",
@@ -347,7 +347,7 @@
         });
     }
 
-    const KEYBOARD_VERSION = '3.74.2';
+    const KEYBOARD_VERSION = '3.74.3';
     // #39-12 收口：整屏级互斥视图注册表（单一事实源）。统计浮层、
     // 定制面板两轮同款叠层事故的根因是互关调用散装在各个 toggle 里，
     // 新视图忘了关所有人就叠加。现在：新视图在此登记一次（怎么判开、
@@ -595,7 +595,8 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
     ];
     // Over-long clipboard items cannot pass the native commitText limit, so
     // they render disabled in the panel (stored in full, paste blocked).
-    // 粘贴上限：再大就容易把输入框和桥一次撑爆。存储侧另有约 2MB / 300 条。
+    // 粘贴上限：再大就容易把输入框和桥一次撑爆。条数不设上限，
+    // 全部正文大约 32MB，只存在本机。
     const MAX_COMMIT_CODE_POINTS = 100000;
     // Cursor scrub: one caret step per 12px of drag at the default
     // 3x speed (SCRUB_UNIT_BASE_PX / scrubSpeed), counted after the fixed
@@ -10620,7 +10621,7 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
             else layer.dataset.empty = '1';
             if (!items.length) {
                 empty.textContent = this.panelTab === 'clipboard'
-                    ? t("剪贴板只留在这台手机上，复制的内容会出现在这里")
+                    ? t("剪贴板只留在这台手机上，不上传、不进云备份。条数不另设上限；全部正文大约 32MB，再大就存不下。")
                     : t("暂无常用语，点右上角「＋添加」");
                 return;
             }
@@ -10678,8 +10679,8 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
                             const chip = document.createElement('button');
                             chip.type = 'button';
                             chip.className = 'clip-extract';
-                            chip.textContent = t(piece.kind) + ' ' + (piece.value.length > 18
-                                ? piece.value.slice(0, 18) + '…' : piece.value);
+                            chip.textContent = t(piece.kind) + ' ' + (piece.value.length > 28
+                                ? piece.value.slice(0, 28) + '…' : piece.value);
                             chip.addEventListener('click', event => {
                                 event.stopPropagation();
                                 this.call(() => {
@@ -11291,25 +11292,12 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
                 id: String(item.id), text: String(item.text), time: Number(item.time) || 0,
                 group: String(item.group || ''),
             }));
-            this.syncClipboardBadge();
             if (this.panelOpen && this.panelTab === 'clipboard') this.renderPanel();
         }
 
         onLearnNote(payload) {
             const text = payload && payload.text;
             if (text) this.showToast(String(text));
-        }
-
-        syncClipboardBadge() {
-            const btn = document.getElementById('clipboardButton');
-            if (!btn) return;
-            const badge = btn.querySelector('.clip-count');
-            const count = (this.clipboardItems || []).length;
-            if (badge) {
-                badge.textContent = count > 99 ? '99+' : String(count);
-                badge.hidden = count <= 0;
-            }
-            btn.setAttribute('aria-label', count ? t("剪贴板") + ' ' + count : t("剪贴板"));
         }
 
         /** 从一段混杂文本里拆出链接、邮箱、号码和连续中文。整段本身不算。 */
@@ -11946,7 +11934,6 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
             // design §7.4: the candidate injection matches against this
             // cache - it must be warm before the favorites panel ever opens.
             this.call(() => Native.getFavorites(this.token));
-            this.call(() => Native.getClipboard(this.token));
             // 备份数据源（userdata.md §1.4/§1.5）：先按 rev 拉取恢复值，
             // 再把本地镜像推给原生——两个方向都走一遍，导入与修改才收敛。
             pullStores(this.token);

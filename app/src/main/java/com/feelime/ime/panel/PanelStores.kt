@@ -143,12 +143,12 @@ class ClipboardStore(private val context: Context) {
 
     fun record(text: String) {
         synchronized(prefs) {
-            val items = PanelCodec.parse(prefs.getString(KEY, "").orEmpty())
+            val items = PanelCodec.parse(readItemsRaw())
             val next = PanelStoreOps.insert(
                 items, text, nextId(), System.currentTimeMillis(),
                 TEXT_BUDGET_BYTES, MAX_ITEMS,
             ) ?: return
-            prefs.edit().putString(KEY, PanelCodec.serialize(next)).commit()
+            writeItemsRaw(PanelCodec.serialize(next))
         }
         // New content landed (listener or focus re-capture): let the
         // service push so an open clipboard panel hot-refreshes instead
@@ -163,7 +163,7 @@ class ClipboardStore(private val context: Context) {
     var onChanged: (() -> Unit)? = null
 
     fun items(): List<PanelItem> = synchronized(prefs) {
-        PanelCodec.parse(prefs.getString(KEY, "").orEmpty())
+        PanelCodec.parse(readItemsRaw())
     }
 
     fun groupNames(): List<String> = synchronized(prefs) { readGroupNames() }
@@ -178,7 +178,7 @@ class ClipboardStore(private val context: Context) {
                 if (name.isNotEmpty() && name !in readGroupNames()) return@post
                 val map = readGroupMap()
                 if (name.isEmpty()) map.remove(id) else map[id] = name
-                val live = PanelCodec.parse(prefs.getString(KEY, "").orEmpty()).map { it.id }.toSet()
+                val live = PanelCodec.parse(readItemsRaw()).map { it.id }.toSet()
                 map.keys.retainAll(live)
                 writeGroupMap(map)
             }
@@ -212,9 +212,9 @@ class ClipboardStore(private val context: Context) {
 
     private fun removeNow(id: String) {
         val removed = synchronized(prefs) {
-            val items = PanelCodec.parse(prefs.getString(KEY, "").orEmpty())
+            val items = PanelCodec.parse(readItemsRaw())
             val next = PanelStoreOps.remove(items, id)
-            prefs.edit().putString(KEY, PanelCodec.serialize(next)).commit()
+            writeItemsRaw(PanelCodec.serialize(next))
             items.firstOrNull { it.id == id }
         }
         if (removed != null) {
@@ -238,7 +238,7 @@ class ClipboardStore(private val context: Context) {
 
     private fun clearNow() {
         synchronized(prefs) {
-            prefs.edit().putString(KEY, "").apply()
+            writeItemsRaw("")
         }
         // Suppress whatever the system clipboard still holds so a focus
         // re-capture cannot resurrect the wiped history. Only the fingerprint
@@ -264,6 +264,34 @@ class ClipboardStore(private val context: Context) {
     }.getOrDefault("")
 
     private fun nextId(): String = "%012x".format(idCounter.incrementAndGet())
+
+    /** 正文放本机文件。SharedPreferences 装不下很多长剪贴。
+     *  旧版写在 prefs 的 items 第一次读到就搬过来。 */
+    private fun itemsFile(): java.io.File =
+        java.io.File(context.filesDir, "clipboard-items.txt")
+
+    private fun readItemsRaw(): String {
+        val file = itemsFile()
+        if (file.isFile) return file.readText()
+        val legacy = prefs.getString(KEY, "").orEmpty()
+        if (legacy.isNotEmpty()) writeItemsRaw(legacy)
+        return if (file.isFile) file.readText() else ""
+    }
+
+    private fun writeItemsRaw(raw: String) {
+        val file = itemsFile()
+        if (raw.isEmpty()) {
+            if (file.exists()) file.delete()
+        } else {
+            val tmp = java.io.File(file.parentFile, file.name + ".tmp")
+            tmp.writeText(raw)
+            if (!tmp.renameTo(file)) {
+                file.writeText(raw)
+                tmp.delete()
+            }
+        }
+        if (prefs.contains(KEY)) prefs.edit().remove(KEY).apply()
+    }
 
     private fun readGroupNames(): List<String> =
         prefs.getString(GROUP_NAMES, "").orEmpty().lineSequence()
@@ -291,12 +319,10 @@ class ClipboardStore(private val context: Context) {
     private companion object {
         const val KEY = "items"
         const val SUPPRESS_KEY = "suppress_fingerprint"
-        // Design budget: 64KiB total minus ~8KiB metadata headroom, counting
-        // text UTF-8 bytes only.
-        // 单条不能超过总预算（insert 会整条拒绝）。2MB / 300 条是
-        // SharedPreferences 还能稳定读写的上限，不是为了截短正文。
-        const val TEXT_BUDGET_BYTES = 2 * 1024 * 1024
-        const val MAX_ITEMS = 300
+        // 条数不设日常配额。唯一阀门是全部正文的 UTF-8 字节和：
+        // 大约 32MB，本机文件还能稳妥读写的量。单条超过这个预算整条不收。
+        const val TEXT_BUDGET_BYTES = 32 * 1024 * 1024
+        const val MAX_ITEMS = Int.MAX_VALUE
         const val GROUP_MAP = "group_map"
         const val GROUP_NAMES = "group_names"
     }

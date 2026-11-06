@@ -3282,20 +3282,17 @@ class FeelimeService : InputMethodService(), AsrEngine.Listener, InkEngineListen
                     (getSystemService(VIBRATOR_SERVICE) as? Vibrator)
                 }
                 if (vibrator == null || !vibrator.hasVibrator()) return
-                // 波形 one-shot 而非 createPredefined(EFFECT_CLICK)：预定义
-                // 效果在 MIUI 上静默无效（真机实录 2026-09-27，验收反馈
-                // 「震动无效」）——MIUI 对 VibrationEffect 预定义语义的支持
-                // 参差，裸波形全 ROM 可用。丢掉新马达的 click 曲线精细度，
-                // 换确定性。#39-14 强度档：无幅度马达用时长近似
-                // （12/20/32ms），有幅度控制用振幅（80/160/255）。
+                // 短而轻的一击，接近现在手机输入法的触感。仍只在用户打开
+                // 「按键振动」时发生。预定义 EFFECT_CLICK 在部分国产 ROM
+                // 上没反应，所以用很短的 one-shot。弱/中/强 = 8/10/14ms，
+                // 有振幅时再把力度压低，避免一声重震。
                 val strength = readKeyHapticStrength(this@FeelimeService)
+                val ms = longArrayOf(8L, 10L, 14L)[strength]
                 if (vibrator.hasAmplitudeControl()) {
-                    val amplitude = intArrayOf(80, 160, 255)[strength]
-                    vibrator.vibrate(VibrationEffect.createWaveform(
-                        longArrayOf(0, 18), intArrayOf(0, amplitude), -1))
+                    val amplitude = intArrayOf(36, 72, 120)[strength]
+                    vibrator.vibrate(VibrationEffect.createOneShot(ms, amplitude))
                 } else {
-                    val ms = longArrayOf(12, 20, 32)[strength]
-                    vibrator.vibrate(VibrationEffect.createWaveform(longArrayOf(0, ms), -1))
+                    vibrator.vibrate(VibrationEffect.createOneShot(ms, VibrationEffect.DEFAULT_AMPLITUDE))
                 }
             }
         }
