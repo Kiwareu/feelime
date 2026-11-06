@@ -138,6 +138,10 @@ class MockSettingsNative {
     setPreeditBold(...a) { this._rec('setPreeditBold', a); }
     setCustomEnabled(...a) { this._rec('setCustomEnabled', a); }
     setKeyOpacity(...a) { this._rec('setKeyOpacity', a); }
+    setGlassSkin(...a) { this._rec('setGlassSkin', a); }
+    setGlassBlur(...a) { this._rec('setGlassBlur', a); }
+    setGlassRadius(...a) { this._rec('setGlassRadius', a); }
+    setPanelOpacity(...a) { this._rec('setPanelOpacity', a); }
     setKeyBubble(...a) { this._rec('setKeyBubble', a); }
     setBubbleLinger(...a) { this._rec('setBubbleLinger', a); }
     saveUserWords(...a) { this._rec('saveUserWords', a); }
@@ -2304,7 +2308,7 @@ test('appearance page reflects state and commits themeMode / keyOpacity with the
     const world = new SettingsWorld();
     world.push({ ...BASE_STATE });
     equal(world.$('themeMode').value, 'auto', 'theme mode default auto');
-    equal(world.$('keyOpacity').value, '100', 'key opacity default 100 (opaque)');
+    equal(world.$('keyOpacity').value, '78', 'key opacity default 78 (glass)');
     world.push({ ...BASE_STATE, themeMode: 'dark', keyOpacity: 45 });
     equal(world.$('themeMode').value, 'dark', 'theme mode follows state');
     equal(world.$('keyOpacity').value, '45', 'key opacity follows state');
@@ -2572,6 +2576,23 @@ test('key sound style select posts style; custom routes to the file picker', () 
 });
 
 // #31 键盘色调：swatch 行按 state 渲染选中态，点击发 setThemePreset。
+test('glass skins render and post setGlassSkin; blur slider commits on release', () => {
+    const world = new SettingsWorld();
+    world.push({ ...BASE_STATE, glassSkin: 'ocean', glassBlur: 18 });
+    const cards = [...world.doc.querySelectorAll('#glassSkinGrid .skin-card')];
+    equal(cards.length, 8, 'eight built-in skins');
+    equal(cards.find(card => card.dataset.skin === 'ocean').className.includes('active'), true,
+        'current skin marked active');
+    equal(world.$('glassBlur').value, '18', 'blur follows state');
+    cards.find(card => card.dataset.skin === 'ink').click();
+    equal(world.lastCall('setGlassSkin').args, ['ink', world.token], 'skin click posts id + token');
+    const slider = world.$('glassBlur');
+    slider.listeners.find(l => l.type === 'input').handler({ target: { value: '12' } });
+    equal(world.native.of('setGlassBlur').length, 0, 'dragging does not commit');
+    slider.listeners.find(l => l.type === 'change').handler({ target: { value: '12' } });
+    equal(world.lastCall('setGlassBlur').args, [12, world.token], 'release commits blur');
+});
+
 test('theme preset swatches render state and post on click', () => {
     const world = new SettingsWorld();
     world.push({ ...BASE_STATE, themePreset: 'ocean' });
@@ -2716,7 +2737,8 @@ test('skin page row order: tints, saturations, hex codes, opacity, backgrounds, 
     // hue/sat/hex/不透明度）→ 预览。开关行内首控件是 keyFollow。
     equal(ids, ['themeHue', 'themeSat', 'themeHexSwatch', 'bgImageLight',
         'bgImageDark', 'keyFollow', 'keyHue', 'keySat', 'keyHexSwatch',
-        'keyOpacity', 'themePreview'], 'rows follow the agreed order');
+        'keyOpacity', 'themePreview', 'glassBlur', 'glassRadius', 'panelOpacity'],
+        'rows follow the agreed order');
 });
 
 // 皮肤入口（用户验收五轮）：与其他入口同款 .entry 行（label+chevron），

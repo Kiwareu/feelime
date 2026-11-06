@@ -218,7 +218,7 @@
         "拖动排序": "Drag to reorder",
         "暂无单字": "No single-character candidates",
         "暂无候选": "No candidates",
-        "剪贴板已开启，复制的内容将在这里显示": "Copied text will appear here.",
+        "剪贴板只留在这台手机上，复制的内容会出现在这里": "Clipboard stays on this phone. Copied text shows up here.",
         "暂无常用语，点右上角「＋添加」": "No saved phrases. Tap Add to create one.",
         "…（内容过长）": "… (text truncated)",
         "组合过长，已清空": "Composition too long; cleared",
@@ -274,6 +274,20 @@
         "＋添加": "＋ Add",
         "松手结束": "Release to finish.",
         "点击任意位置结束": "Tap anywhere to finish.",
+        "请说较标准的普通话。标点由本机模型自动补上，声音不会上传": "Speak fairly standard Mandarin. Punctuation is added on-device; audio is never uploaded.",
+        "正在本机加载语音模型，声音不会上传": "Loading the on-device model. Audio is never uploaded.",
+        "正在整理这句话": "Cleaning up this phrase",
+        "请说较标准的普通话，松手后上屏": "Speak fairly standard Mandarin, then release to insert.",
+        "字母直接上屏": "Letters go straight in",
+        "全拼，空格选第一个词": "Pinyin; space picks the first word",
+        "声母韵母各一键": "Initial and final, one key each",
+        "九键，适合单手": "Nine keys, easier one-handed",
+        "按笔画顺序": "Stroke order",
+        "音形，需先导入码表": "Shape codes; import a table first",
+        "手写，识别有限": "Handwriting; recognition is limited",
+        "法语离线": "French, offline",
+        "俄语离线": "Russian, offline",
+        "罗马字": "Romaji",
         "取消语音输入": "Cancel voice input",
         "撤销本次听写": "Discard this dictation",
         "撤销": "Discard",
@@ -321,7 +335,7 @@
         });
     }
 
-    const KEYBOARD_VERSION = '3.73.79';
+    const KEYBOARD_VERSION = '3.74.0';
     // #39-12 收口：整屏级互斥视图注册表（单一事实源）。统计浮层、
     // 定制面板两轮同款叠层事故的根因是互关调用散装在各个 toggle 里，
     // 新视图忘了关所有人就叠加。现在：新视图在此登记一次（怎么判开、
@@ -606,6 +620,19 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
         'french': { label: 'FR', title: 'Français', layout: 'qwerty-fr', engine: true },
         'russian': { label: 'РУ', title: 'Русский', layout: 'cyrillic', engine: true },
         'japanese': { label: '日', title: '日本語 Romaji', layout: 'qwerty', engine: true },
+    };
+    // 模式菜单副文案（中文习惯叫法）。键是 t() 的中文原文。
+    const MODE_HINTS = {
+        'direct': '字母直接上屏',
+        'pinyin': '全拼，空格选第一个词',
+        'double-pinyin': '声母韵母各一键',
+        't9': '九键，适合单手',
+        'stroke': '按笔画顺序',
+        'flypy': '音形，需先导入码表',
+        'handwriting': '手写，识别有限',
+        'french': '法语离线',
+        'russian': '俄语离线',
+        'japanese': '罗马字',
     };
 
     const LAYOUTS = {
@@ -1654,7 +1681,8 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
             // 背景图亮/暗两组：各自独立，空串 = 该组无图（纯色背景）。
             this.bgImageLight = '';
             this.bgImageDark = '';
-            // 键帽不透明度（0-100，默认 100=不透明）。
+            // 键帽不透明度（0-100）。hello 缺字段时保持 100（旧壳契约）；
+            // 新壳默认下发 78，液态玻璃略透、文字仍实色。
             this.keyOpacity = 100;
             // #39 横屏三项（默认=铺满+避让安全区、上限 60%、不透明）。
             this.landscapeSafeArea = true;
@@ -7389,6 +7417,25 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
             try { Native.setChromeColor(color, this.token); } catch (_) { /* bridge absent */ }
         }
 
+        /** 液态玻璃：模糊、圆角、面板通透度。缺省字段保持 CSS 默认。 */
+        applyGlass(payload) {
+            const root = document.documentElement.style;
+            const blur = Number(payload && payload.glassBlur);
+            if (Number.isFinite(blur) && blur >= 0 && blur <= 32) {
+                root.setProperty('--glass-blur', Math.round(blur) + 'px');
+            }
+            const radius = Number(payload && payload.glassRadius);
+            if (Number.isFinite(radius) && radius >= 8 && radius <= 24) {
+                const rounded = Math.round(radius);
+                root.setProperty('--radius-key', rounded + 'px');
+                root.setProperty('--radius-card', Math.round(rounded * 1.35) + 'px');
+            }
+            const panel = Number(payload && payload.panelOpacity);
+            if (Number.isFinite(panel) && panel >= 35 && panel <= 100) {
+                root.setProperty('--panel-alpha', String(panel / 100));
+            }
+        }
+
         /** 键帽不透明度：只动背景 alpha 变量，键帽文字保持实色。 */
         applyKeyOpacity() {
             const pct = Math.max(0, Math.min(100, Number(this.keyOpacity) || 0));
@@ -8339,7 +8386,10 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
                 button.className = current ? 'current' : (ready ? '' : 'preparing');
                 // Compact rows - the shorthand leads, the full
                 // title follows (left aligned, no trailing blank).
-                button.innerHTML = `<span class="prep">${ready ? modeLabel(name) : '…'}</span><span>${t(config.title)}</span>`;
+                const hint = MODE_HINTS[name] ? t(MODE_HINTS[name]) : '';
+                button.innerHTML = `<span class="prep">${ready ? modeLabel(name) : '…'}</span>` +
+                    `<span class="mm-copy"><span class="mm-title">${t(config.title)}</span>` +
+                    (hint ? `<span class="mm-hint">${hint}</span>` : '') + `</span>`;
                 if (ready && !current) {
                     button.addEventListener('click', () => {
                         this.closeModeMenu();
@@ -10122,7 +10172,13 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
             ordered.forEach((candidate, index) => {
                 if (appendOnly && index < existing.length) return;
                 const button = document.createElement('button');
-                button.className = index === 0 ? 'candidate first' : 'candidate';
+                const latin = ['pinyin', 'double-pinyin', 't9'].includes(this.mode)
+                    && typeof labels[index] === 'string'
+                    && labels[index].length >= 2
+                    && /^[A-Za-z][A-Za-z0-9]*$/.test(labels[index]);
+                button.className = 'candidate'
+                    + (index === 0 ? ' first' : '')
+                    + (latin ? ' en-mix' : '');
                 button.textContent = labels[index];
                 button._poolCandidate = candidate;
                 let longPressed = false;
@@ -10498,7 +10554,7 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
             else layer.dataset.empty = '1';
             if (!items.length) {
                 empty.textContent = this.panelTab === 'clipboard'
-                    ? t("剪贴板已开启，复制的内容将在这里显示")
+                    ? t("剪贴板只留在这台手机上，复制的内容会出现在这里")
                     : t("暂无常用语，点右上角「＋添加」");
                 return;
             }
@@ -11306,6 +11362,7 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
             this.applyOneHand();
             this.applyBackground();
             this.applyKeyOpacity();
+            this.applyGlass(payload);
             this.applyLandscapeChrome();
             // #31 预置色调：native pref 经 hello 下发，html[data-preset]
             // 驱动 CSS 覆盖（classic = 清掉 dataset 回默认绿）。
@@ -12055,6 +12112,16 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
                     : this.voiceSession === 'space-hold'
                         ? t("松手上屏")
                         : t("点击任意位置结束");
+            const guide = document.getElementById('voiceGuide');
+            if (guide) {
+                guide.textContent = this.voiceState === 'loading'
+                    ? t("正在本机加载语音模型，声音不会上传")
+                    : this.voiceState === 'stopping'
+                        ? t("正在整理这句话")
+                        : this.voiceSession === 'space-hold'
+                            ? t("请说较标准的普通话，松手后上屏")
+                            : t("请说较标准的普通话。标点由本机模型自动补上，声音不会上传");
+            }
             if (payload.message && this.voiceState === 'error') {
                 document.getElementById('voiceStatus').textContent = payload.message;
             }

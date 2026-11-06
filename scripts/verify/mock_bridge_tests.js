@@ -4418,10 +4418,14 @@ test('long-press menu filters to the enabled keyboards', {since: '3.59.0'}, () =
     world.touchDown(world.$('modeToggle'));
     world.clock.advance(360);
     world.touchUp(world.$('modeToggle'));
-    const titles = [...world.$('modeMenu').children].map(el => el.textContent);
+    const titles = [...world.$('modeMenu').children].map(el => {
+        const title = el.querySelector('.mm-title');
+        return title ? title.textContent : el.textContent;
+    });
     // round-6：菜单不再带「快捷切换」尾行。
     // 顺序 = MODES 键序 ∩ 勾选集（direct < t9 < handwriting）。
-    equal(JSON.stringify(titles.map(x => x.replace(/^(En|九|…)/, ''))),
+    // 3.74.0 起标题在 .mm-title，副文案不参与断言。
+    equal(JSON.stringify(titles),
         JSON.stringify(['英文 Direct', '九宫格 T9', '手写 Handwriting']),
         'menu lists only enabled keyboards');
 });
@@ -5025,7 +5029,12 @@ test('mode menu lists all modes; selecting emits selectMode', {since: '3.33.0'},
     // round-6：默认勾选集 En/全拼/双拼/九宫格/笔画（手写实验性默认
     // 不进菜单；fr/ru/ja 依旧不进；菜单不再带快捷切换行）。
     equal(items.length, 5, 'default enabled set only');
-    equal(items[0].textContent, 'En英文 Direct', 'first item: shorthand leads, title follows');
+    const lead = el => {
+        const prep = el.querySelector('.prep');
+        const title = el.querySelector('.mm-title');
+        return prep && title ? prep.textContent + title.textContent : el.textContent;
+    };
+    equal(lead(items[0]), 'En英文 Direct', 'first item: shorthand leads, title follows');
     world.tap(items[0]);
     equal(world.native.of('selectMode').length, 0, 'direct is current, no call');
     world.touchDown(toggle);
@@ -9443,7 +9452,8 @@ test('stroke menu item requires an explicit ready=true from hello', {since: '3.4
         stroke: true, japanese: true, french: true, russian: true } });
     ready.context.window.Feelime.toggleModeMenu();
     const item = [...ready.$('modeMenu').children][4];
-    equal(item.textContent, '笔笔画 Stroke', 'ready item leads with the shorthand');
+    const strokeLead = item.querySelector('.prep').textContent + item.querySelector('.mm-title').textContent;
+    equal(strokeLead, '笔笔画 Stroke', 'ready item leads with the shorthand');
     ready.tap(item);
     equal(ready.native.of('selectMode').filter(c => c.args[0] === 'stroke').length, 1,
         'ready item selects stroke');
@@ -9496,7 +9506,9 @@ test('handwriting: menu entry gated by strictReady (missing field = no entry)', 
         JSON.stringify(['direct', 'handwriting', 'pinyin']));
     ready.context.window.Feelime.toggleModeMenu();
     const readyItem = [...ready.$('modeMenu').children].find(el => el.textContent.includes('手写'));
-    equal(readyItem.textContent, '手手写 Handwriting', 'shorthand leads, title follows');
+    const hwLead = readyItem.querySelector('.prep').textContent
+        + readyItem.querySelector('.mm-title').textContent;
+    equal(hwLead, '手手写 Handwriting', 'shorthand leads, title follows');
     ready.tap(readyItem);
     equal(ready.native.of('selectMode').filter(c => c.args[0] === 'handwriting').length, 1,
         'ready handwriting selects');

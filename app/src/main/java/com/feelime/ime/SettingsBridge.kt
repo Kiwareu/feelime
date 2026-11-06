@@ -231,8 +231,14 @@ fun readKbLayout(context: Context): String {
     return if (value == "14") "14" else "26"
 }
 
-/** 键帽不透明度（0-100，默认 100）：背景图开启时键帽可半透。 */
+/** 键帽不透明度（0-100，默认 78）：液态玻璃略透，100 为实心键帽。 */
 const val PREF_KEY_OPACITY = "key_opacity"
+/** 液态玻璃：磨砂强度 0..32px、键帽圆角 8..24px、面板通透 35..100。 */
+const val PREF_GLASS_BLUR = "glass_blur"
+const val PREF_GLASS_RADIUS = "glass_radius"
+const val PREF_PANEL_OPACITY = "panel_opacity"
+/** 上次套用的内置皮肤。空串 = 用户已单独微调，不再点亮某一套。 */
+const val PREF_GLASS_SKIN = "glass_skin"
 /** 按键气泡（issue #30-1，默认关）：按下时放大预览所按字符。 */
 const val PREF_KEY_BUBBLE = "key_bubble"
 /** 气泡停留时长（验收 2026-09-24：松手立即消失看不清）。0/250/400/600ms。 */
@@ -247,8 +253,55 @@ const val KB_HEIGHT_PORTRAIT_KEY = "keyboard_height_portrait"
 
 fun readKeyOpacity(context: Context): Int =
     context.getSharedPreferences(KEYBOARD_PREFS_FILE, Context.MODE_PRIVATE)
-        .getInt(PREF_KEY_OPACITY, 100)
-        .let { if (it in 0..100) it else 100 }
+        .getInt(PREF_KEY_OPACITY, 78)
+        .let { if (it in 0..100) it else 78 }
+
+data class GlassSkin(
+    val id: String,
+    val preset: String,
+    val hue: Int,
+    val sat: Int,
+    val keyOpacity: Int,
+    val blur: Int,
+    val radius: Int,
+    val panel: Int,
+    val themeL: Int,
+)
+
+/** 内置液态玻璃皮肤。点一套会同时写下色调、透明度、模糊和圆角。 */
+val GLASS_SKINS = listOf(
+    GlassSkin("liuli", "classic", -1, 78, 78, 16, 16, 72, 0),
+    GlassSkin("ocean", "ocean", -1, 64, 74, 18, 18, 66, 0),
+    GlassSkin("violet", "violet", -1, 58, 76, 16, 18, 68, 0),
+    GlassSkin("amber", "amber", -1, 66, 80, 14, 16, 74, 0),
+    GlassSkin("sakura", "sakura", -1, 52, 76, 18, 20, 68, 0),
+    GlassSkin("aurora", "teal", -1, 74, 72, 20, 18, 62, 6),
+    GlassSkin("ink", "classic", 222, 14, 88, 10, 14, 80, -6),
+    GlassSkin("frost", "ocean", 206, 24, 70, 22, 20, 58, 18),
+)
+
+fun readGlassBlur(context: Context): Int =
+    context.getSharedPreferences(KEYBOARD_PREFS_FILE, Context.MODE_PRIVATE)
+        .getInt(PREF_GLASS_BLUR, 16)
+        .takeIf { it in 0..32 } ?: 16
+
+fun readGlassRadius(context: Context): Int =
+    context.getSharedPreferences(KEYBOARD_PREFS_FILE, Context.MODE_PRIVATE)
+        .getInt(PREF_GLASS_RADIUS, 16)
+        .takeIf { it in 8..24 } ?: 16
+
+fun readPanelOpacity(context: Context): Int =
+    context.getSharedPreferences(KEYBOARD_PREFS_FILE, Context.MODE_PRIVATE)
+        .getInt(PREF_PANEL_OPACITY, 72)
+        .takeIf { it in 35..100 } ?: 72
+
+fun readGlassSkin(context: Context): String {
+    // 空串 = 还没套用皮肤，或套用后又单独调过。不要把缺省伪装成「琉璃青」，
+    // 否则饱和度仍是全彩时徽章会对不上。
+    val saved = context.getSharedPreferences(KEYBOARD_PREFS_FILE, Context.MODE_PRIVATE)
+        .getString(PREF_GLASS_SKIN, "") ?: ""
+    return if (GLASS_SKINS.any { it.id == saved }) saved else ""
+}
 
 /** #39 横屏三项（设置三级页「横屏」）：挖孔安全区 / 高度上限% /
  *  整体不透明度%。默认=上轮定案行为（留安全区、上限 60%、不透明）。 */
@@ -915,6 +968,10 @@ class SettingsBridge(
             .put("bgImageLightSource", readBgImageSource(context, "light"))
             .put("bgImageDarkSource", readBgImageSource(context, "dark"))
             .put("keyOpacity", readKeyOpacity(context))
+            .put("glassBlur", readGlassBlur(context))
+            .put("glassRadius", readGlassRadius(context))
+            .put("panelOpacity", readPanelOpacity(context))
+            .put("glassSkin", readGlassSkin(context))
             .put("landscapeSafeArea", if (readLandscapeSafeArea(context)) 1 else 0)
             .put("landscapeCeil", readLandscapeCeilPct(context))
             .put("hwkbForm", readHwkbForm(context))
@@ -1788,7 +1845,9 @@ class SettingsBridge(
         if (preset !in THEME_PRESETS) return@guarded
         context.getSharedPreferences(KEYBOARD_PREFS_FILE, Context.MODE_PRIVATE)
             .edit().putString(PREF_THEME_PRESET, preset)
-            .putInt(PREF_THEME_HUE, -1).commit()
+            .putInt(PREF_THEME_HUE, -1)
+            .putString(PREF_GLASS_SKIN, "")
+            .commit()
         context.sendBroadcast(
             Intent(ACTION_KEYBOARD_PREFS_CHANGED).setPackage(context.packageName),
         )
@@ -1800,7 +1859,9 @@ class SettingsBridge(
     fun setThemeHue(hue: Int, token: String) = guarded(token) {
         if (hue !in -1..360) return@guarded
         context.getSharedPreferences(KEYBOARD_PREFS_FILE, Context.MODE_PRIVATE)
-            .edit().putInt(PREF_THEME_HUE, hue).commit()
+            .edit().putInt(PREF_THEME_HUE, hue)
+            .putString(PREF_GLASS_SKIN, "")
+            .commit()
         context.sendBroadcast(
             Intent(ACTION_KEYBOARD_PREFS_CHANGED).setPackage(context.packageName),
         )
@@ -1824,7 +1885,9 @@ class SettingsBridge(
     fun setKeyHue(hue: Int, token: String) = guarded(token) {
         if (hue !in -1..360) return@guarded
         context.getSharedPreferences(KEYBOARD_PREFS_FILE, Context.MODE_PRIVATE)
-            .edit().putInt(PREF_KEY_HUE, hue).commit()
+            .edit().putInt(PREF_KEY_HUE, hue)
+            .putString(PREF_GLASS_SKIN, "")
+            .commit()
         context.sendBroadcast(
             Intent(ACTION_KEYBOARD_PREFS_CHANGED).setPackage(context.packageName),
         )
@@ -1836,7 +1899,9 @@ class SettingsBridge(
     fun setKeySat(sat: Int, token: String) = guarded(token) {
         if (sat !in -1..100) return@guarded
         context.getSharedPreferences(KEYBOARD_PREFS_FILE, Context.MODE_PRIVATE)
-            .edit().putInt(PREF_KEY_SAT, sat).commit()
+            .edit().putInt(PREF_KEY_SAT, sat)
+            .putString(PREF_GLASS_SKIN, "")
+            .commit()
         context.sendBroadcast(
             Intent(ACTION_KEYBOARD_PREFS_CHANGED).setPackage(context.packageName),
         )
@@ -1848,7 +1913,9 @@ class SettingsBridge(
     fun setThemeL(offset: Int, token: String) = guarded(token) {
         if (offset !in -50..50) return@guarded
         context.getSharedPreferences(KEYBOARD_PREFS_FILE, Context.MODE_PRIVATE)
-            .edit().putInt(PREF_THEME_L, offset).commit()
+            .edit().putInt(PREF_THEME_L, offset)
+            .putString(PREF_GLASS_SKIN, "")
+            .commit()
         context.sendBroadcast(
             Intent(ACTION_KEYBOARD_PREFS_CHANGED).setPackage(context.packageName),
         )
@@ -1860,7 +1927,9 @@ class SettingsBridge(
     fun setKeyL(offset: Int, token: String) = guarded(token) {
         if (offset != -1 && offset !in -50..50) return@guarded
         context.getSharedPreferences(KEYBOARD_PREFS_FILE, Context.MODE_PRIVATE)
-            .edit().putInt(PREF_KEY_L, offset).commit()
+            .edit().putInt(PREF_KEY_L, offset)
+            .putString(PREF_GLASS_SKIN, "")
+            .commit()
         context.sendBroadcast(
             Intent(ACTION_KEYBOARD_PREFS_CHANGED).setPackage(context.packageName),
         )
@@ -1872,7 +1941,9 @@ class SettingsBridge(
     fun setThemeSat(sat: Int, token: String) = guarded(token) {
         if (sat !in 0..100) return@guarded
         context.getSharedPreferences(KEYBOARD_PREFS_FILE, Context.MODE_PRIVATE)
-            .edit().putInt(PREF_THEME_SAT, sat).commit()
+            .edit().putInt(PREF_THEME_SAT, sat)
+            .putString(PREF_GLASS_SKIN, "")
+            .commit()
         context.sendBroadcast(
             Intent(ACTION_KEYBOARD_PREFS_CHANGED).setPackage(context.packageName),
         )
@@ -1884,7 +1955,63 @@ class SettingsBridge(
     fun setKeyOpacity(pct: Int, token: String) = guarded(token) {
         if (pct !in 0..100) return@guarded
         context.getSharedPreferences(KEYBOARD_PREFS_FILE, Context.MODE_PRIVATE)
-            .edit().putInt(PREF_KEY_OPACITY, pct).commit()
+            .edit().putInt(PREF_KEY_OPACITY, pct)
+            .putString(PREF_GLASS_SKIN, "")
+            .commit()
+        context.sendBroadcast(
+            Intent(ACTION_KEYBOARD_PREFS_CHANGED).setPackage(context.packageName),
+        )
+        pushState()
+    }
+
+    /** 套用一套内置液态玻璃皮肤（色调、透明度、模糊、圆角一起写）。 */
+    @JavascriptInterface
+    fun setGlassSkin(id: String, token: String) = guarded(token) {
+        val skin = GLASS_SKINS.find { it.id == id } ?: return@guarded
+        context.getSharedPreferences(KEYBOARD_PREFS_FILE, Context.MODE_PRIVATE)
+            .edit()
+            .putString(PREF_GLASS_SKIN, skin.id)
+            .putString(PREF_THEME_PRESET, skin.preset)
+            .putInt(PREF_THEME_HUE, skin.hue)
+            .putInt(PREF_THEME_SAT, skin.sat)
+            .putInt(PREF_THEME_L, skin.themeL)
+            .putInt(PREF_KEY_HUE, -1)
+            .putInt(PREF_KEY_SAT, -1)
+            .putInt(PREF_KEY_L, -1)
+            .putInt(PREF_KEY_OPACITY, skin.keyOpacity)
+            .putInt(PREF_GLASS_BLUR, skin.blur)
+            .putInt(PREF_GLASS_RADIUS, skin.radius)
+            .putInt(PREF_PANEL_OPACITY, skin.panel)
+            .commit()
+        context.sendBroadcast(
+            Intent(ACTION_KEYBOARD_PREFS_CHANGED).setPackage(context.packageName),
+        )
+        pushState()
+    }
+
+    @JavascriptInterface
+    fun setGlassBlur(px: Int, token: String) = guarded(token) {
+        if (px !in 0..32) return@guarded
+        writeGlassTune(PREF_GLASS_BLUR, px)
+    }
+
+    @JavascriptInterface
+    fun setGlassRadius(px: Int, token: String) = guarded(token) {
+        if (px !in 8..24) return@guarded
+        writeGlassTune(PREF_GLASS_RADIUS, px)
+    }
+
+    @JavascriptInterface
+    fun setPanelOpacity(pct: Int, token: String) = guarded(token) {
+        if (pct !in 35..100) return@guarded
+        writeGlassTune(PREF_PANEL_OPACITY, pct)
+    }
+
+    private fun writeGlassTune(key: String, value: Int) {
+        context.getSharedPreferences(KEYBOARD_PREFS_FILE, Context.MODE_PRIVATE)
+            .edit().putInt(key, value)
+            .putString(PREF_GLASS_SKIN, "")
+            .commit()
         context.sendBroadcast(
             Intent(ACTION_KEYBOARD_PREFS_CHANGED).setPackage(context.packageName),
         )

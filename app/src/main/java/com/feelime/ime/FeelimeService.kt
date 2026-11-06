@@ -2574,6 +2574,10 @@ class FeelimeService : InputMethodService(), AsrEngine.Listener, InkEngineListen
             .put("bgImageLightSource", readBgImageSource(this, "light"))
             .put("bgImageDarkSource", readBgImageSource(this, "dark"))
             .put("keyOpacity", readKeyOpacity(this))
+            .put("glassBlur", readGlassBlur(this))
+            .put("glassRadius", readGlassRadius(this))
+            .put("panelOpacity", readPanelOpacity(this))
+            .put("glassSkin", readGlassSkin(this))
             .put("keyBubble", readKeyBubble(this))
             .put("bubbleLinger", readBubbleLinger(this))
             // #39 横屏三级页三项 + 挖孔安全区实测值（css px，竖屏恒 0）。

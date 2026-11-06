@@ -67,7 +67,9 @@ update/），完整设置页在 `app/src/main/assets/settings/`。
 | `--card-bg` / `--card-text` / `--card-sub` | `#2b2b31` / `#e8e8e8` / `#a2a2ac` | `#f7f7fa` / `#1c1c24` / `#6a6a78` | 浮卡（常用语编辑卡、高度卡） |
 | `--input-placeholder` / `--key-subtext` | `#dedede` | `#5c616b` | 输入框占位/键面副字 |
 | `--scrim` | `#000000b8` | `#ffffffb0` | 语音浮层遮罩 |
-| `--radius-key` / `--radius-card` | `5px` / `10px` | 同左 | 圆角 |
+| `--radius-key` / `--radius-card` | `16px` / `22px` | 同左 | 圆角（皮肤页可调键圆角 8–24px，卡片约为 1.35 倍） |
+| `--key-alpha` / `--panel-alpha` | `0.78` / `0.72` | 同左 | 键帽 / 面板通透度；文字不跟随变淡 |
+| `--glass-blur` | `16px` | 同左 | 背景与壁纸的磨砂强度 |
 
 - 强调**填充**与强调**文字**分开：绿底上用 `--accent-ink`，普通底上用
   `--accent-text`；禁止拿 `--accent` 直接当小字文字色。
@@ -83,7 +85,7 @@ update/），完整设置页在 `app/src/main/assets/settings/`。
 
 ### 1.2 几何与高度预算
 
-- 键高 `--kb-row-h`（默认 44px），键圆角 5px，水平间距 5px，行距 5px，
+- 键高 `--kb-row-h`（默认 44px），键圆角默认 16px（`--radius-key`），水平间距 5px，行距 5px，
   左右边缘 4px；底行 flex 权重：123=2.1、标点=1.0、空格=4.15、中英=1.15、
   enter=2.25。
 - 竖屏内容预算：工具栏 40px + 候选条 + 4 行键 + 行距 + 底部边距 ≈ 272px

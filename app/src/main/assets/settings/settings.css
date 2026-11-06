@@ -120,7 +120,10 @@ body {
      *  下失效，native 注入兜底）——键盘弹起时底部 padding 抬高，配合
      *  settings.js 的 focusin scrollIntoView 把输入框滚进可视区。 */
     padding: 0 calc(16px + max(env(safe-area-inset-right), var(--app-inset-right, 0px))) calc(16px + max(env(safe-area-inset-bottom), var(--app-inset-bottom, 0px)) + var(--app-ime-bottom, 0px)) calc(16px + max(env(safe-area-inset-left), var(--app-inset-left, 0px)));
-    background: var(--bg);
+    background:
+        radial-gradient(90% 42% at 0% 0%, rgba(35, 200, 144, .22), transparent 62%),
+        radial-gradient(70% 48% at 100% 0%, rgba(77, 163, 255, .16), transparent 58%),
+        var(--bg);
     color: var(--card-text);
     font: 15px/1.5 system-ui, "Noto Sans CJK SC", sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -217,7 +220,7 @@ main { max-width: 680px; margin: 0 auto; }
     width: 44px;
     height: 44px;
     border: 1px solid var(--line);
-    border-radius: 5px;
+    border-radius: 14px;
     background: var(--panel);
     color: var(--text);
     font-size: 22px;
@@ -241,9 +244,9 @@ main { max-width: 680px; margin: 0 auto; }
     margin: 0 0 12px;
     padding: 16px;
     border: 1px solid var(--line);
-    border-radius: 10px;
+    border-radius: 18px;
     background: var(--card-bg);
-    box-shadow: 0 2px 9px #0002;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16), 0 10px 28px #0002;
     animation: rise .26s ease both;
 }
 
@@ -323,6 +326,48 @@ h3 { margin: 0; font-size: 14px; font-weight: 650; }
     line-height: 1;
 }
 
+.entry-group {
+    margin: 12px 0 0;
+    padding-top: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    color: var(--accent-text);
+}
+.entry-group:first-child { margin-top: 2px; }
+
+.skin-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+}
+.skin-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 68px;
+    padding: 8px 4px;
+    border-radius: 16px;
+    border: 1px solid var(--line);
+    background: var(--pill);
+    color: var(--card-text);
+    font-size: 12px;
+}
+.skin-card.active {
+    border-color: var(--accent);
+    box-shadow: inset 0 0 0 1px var(--accent);
+}
+.skin-dot {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--sw, var(--accent));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .65), 0 4px 10px #0003;
+}
+
 /* --- rows / status ---------------------------------------------------- */
 
 .rows { display: block; }
@@ -395,7 +440,7 @@ h3 { margin: 0; font-size: 14px; font-weight: 650; }
     min-height: 36px;
     padding: 7px 14px;
     border: 1px solid var(--line);
-    border-radius: 5px;
+    border-radius: 12px;
     background: var(--pill);
     color: var(--text);
     font-size: 13px;

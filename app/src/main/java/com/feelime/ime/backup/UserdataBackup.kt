@@ -418,6 +418,10 @@ class UserdataBackup(
                 // 同源）。登记的意义：范围钳制 + 拒绝错误类型——通用分支对
                 // 未登记键连字符串 "120" 都放行，读侧 getInt 才会崩（#61 P6）。
                 PREF_KEYCAP_FONT to KEYCAP_FONT_RANGE,
+                // 液态玻璃（读侧 getInt）。旧备份没有这些键。
+                "glass_blur" to (0..32),
+                "glass_radius" to (8..24),
+                "panel_opacity" to (35..100),
             ),
         )
 
