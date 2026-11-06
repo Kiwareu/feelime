@@ -219,6 +219,7 @@
         "暂无单字": "No single-character candidates",
         "暂无候选": "No candidates",
         "剪贴板只留在这台手机上，不上传、不进云备份。条数不另设上限；全部正文大约 32MB，再大就存不下。": "Clipboard stays on this phone. It is not uploaded and is not in cloud backup. There is no fixed item cap; about 32MB of text total is the on-device ceiling.",
+        "条": "clips",
         "全部": "All",
         "未分组": "Ungrouped",
         "＋分组": "＋ Group",
@@ -347,7 +348,7 @@
         });
     }
 
-    const KEYBOARD_VERSION = '3.74.3';
+    const KEYBOARD_VERSION = '3.74.4';
     // #39-12 收口：整屏级互斥视图注册表（单一事实源）。统计浮层、
     // 定制面板两轮同款叠层事故的根因是互关调用散装在各个 toggle 里，
     // 新视图忘了关所有人就叠加。现在：新视图在此登记一次（怎么判开、
@@ -10556,9 +10557,20 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
             }
         }
 
+        /** 剪贴板面板标题上的总数。工具栏图标不显示条数。 */
+        syncClipTotal() {
+            const el = document.getElementById('clipTotal');
+            if (!el) return;
+            const on = this.panelOpen && this.panelTab === 'clipboard';
+            el.hidden = !on;
+            if (!on) return;
+            el.textContent = (this.clipboardItems || []).length + ' ' + t('条');
+        }
+
         renderPanel() {            const list = document.getElementById('panelList');
             // #67 颜文字 tab：分类 chips + 网格（静态数据，不走剪贴板/
             // 常用语的条目模型——上屏走 commitText（是输入，进统计）。
+            this.syncClipTotal();
             if (this.panelTab === 'kaomoji') { this.renderKaomoji(); return; }
             const empty = document.getElementById('panelEmpty');
             list.replaceChildren();

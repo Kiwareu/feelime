@@ -2690,13 +2690,17 @@ test('panel head carries no toolbar icons; a single X closes (#39-4)', {since: '
     // hidden 但仍属 head 固定件。
     const ids = [...head().children].map(el => el.id)
         .filter(id => id && id !== 'kaomojiTabs');
-    equal(ids.join(','), 'panelClear,panelManage,panelClose',
-        `head = clear/manage + X only (no toolbar icons, no hide): ${ids}`);
+    equal(ids.join(','), 'clipTotal,panelClear,panelManage,panelClose',
+        `head = total + clear/manage + X (no toolbar icons): ${ids}`);
+    assert(!world.$('clipTotal').hidden, 'clipboard panel shows the total');
+    assert(!world.$('clipboardButton').querySelector('.clip-count'), 'toolbar icon has no badge');
+    assert(!/\d/.test(world.$('clipboardButton').textContent || ''), 'toolbar icon text has no count');
     // 工具栏整条隐藏：右组（含语音输入）一颗都进不了面板头。
     equal(world.$('candidateBar').hidden, true, 'toolbar hidden while the panel owns the row');
     // tab 切换走 head 内的 tab 按钮。
     world.tap(world.document.querySelector('[data-panel-tab="favorites"]'));
     equal(world.$('panelManage').hidden, false, 'favorites tab shows +添加');
+    assert(world.$('clipTotal').hidden, 'total stays off the favorites tab');
     // × 关面板，工具栏回来。
     world.tap(world.$('panelClose'));
     equal(world.$('panelLayer').hidden, true, 'X closes the panel');
@@ -7016,6 +7020,8 @@ test('a mixed clip can paste just the link', {since: '3.74.2'}, () => {
     ], ['工作']);
     assert(!world.$('clipboardButton').querySelector('.clip-count'), 'toolbar has no count badge');
     world.tap(world.$('clipboardButton'));
+    assert(/2/.test(world.$('clipTotal').textContent), 'panel shows the clip total');
+    assert(!world.$('clipTotal').hidden, 'total is visible inside the panel');
     const link = [...world.document.querySelectorAll('.clip-extract')]
         .find(node => /example\.com/.test(node.textContent));
     assert(link, 'link chip is offered');

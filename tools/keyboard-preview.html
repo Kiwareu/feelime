@@ -286,9 +286,9 @@ let voiceSegments = 0;
 /* 面板演示数据（预览工具专用）：剪贴板/常用语在内存里维护，桥调用
  * 后像真机原生一样异步回推 onClipboard/onFavorites，否则面板永远空白。 */
 let panelClip = [
-    { id: 'c1', text: 'meeting 3pm, room 402', time: Date.now() - 600e3 },
-    { id: 'c2', text: '这个需求周五前要上线', time: Date.now() - 3600e3 },
-    { id: 'c3', text: 'https://example.com/pr/123', time: Date.now() - 86400e3 },
+    { id: 'c1', text: '订单号 13800138000 详见 https://example.com/a 谢谢', time: Date.now() - 600e3, group: '' },
+    { id: 'c2', text: '这个需求周五前要上线', time: Date.now() - 3600e3, group: '工作' },
+    { id: 'c3', text: 'https://example.com/pr/123', time: Date.now() - 86400e3, group: '工作' },
 ];
 let favSeq = 3;
 let panelFav = [
@@ -299,7 +299,10 @@ let panelFav = [
 function pushPanelData(callback, payload) {
     const win = frame.contentWindow;
     if (!win || !win.Feelime || !win.Feelime[callback]) return;
-    setTimeout(() => win.Feelime[callback](payload), 120);
+    const body = callback === 'onClipboard'
+        ? { groups: ['工作'], ...payload }
+        : payload;
+    setTimeout(() => win.Feelime[callback](body), 120);
 }
 function hostRender(raw) {
     const el = frame.contentDocument && frame.contentDocument.getElementById('hostEditor');
@@ -922,6 +925,7 @@ build();
  * ?act=t9track           相对跟手：手往左滑，高亮滑到数字左边的符号
  * ?act=t9cancel          虚拟光标滑出卡片：缩小变淡 + 「松手撤销」
  * ?act=handwriting       手写键面（canvas 书写 + 模拟识别候选）
+ * ?act=clip              打开剪贴板面板（标题显示条数，工具栏无徽章）
  * 可叠加 &theme=light / &locale=en。 */
 (() => {
     const params = new URLSearchParams(location.search);
@@ -956,6 +960,11 @@ build();
             document.getElementById('actT9').click();
         } else if (act === 'handwriting') {
             document.getElementById('actHandwriting').click();
+        } else if (act === 'clip') {
+            setTimeout(() => {
+                const btn = frame.contentDocument.getElementById('clipboardButton');
+                if (btn) btn.click();
+            }, 80);
         }
         if (act === 't9popup' || act === 't9cancel' || act === 't9track') {
             // 按住 5 键到长按阈值，弹层出现；（t9cancel）再滑出取消圈；

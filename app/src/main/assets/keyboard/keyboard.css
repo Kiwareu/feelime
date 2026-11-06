@@ -1856,6 +1856,14 @@ body[data-one-hand] .panel-head { gap: 5px; }
 .panel-head { height: 40px; padding: 0; margin: 2px 0 10px; }
 body.landscape .panel-head { margin: var(--preedit-band, 18px) 0 4px; }
 .panel-tabs { margin: 0; }
+.clip-total {
+    flex: none;
+    margin-left: 8px;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 550;
+    white-space: nowrap;
+}
 .panel-action { color: var(--text); height: 30px; margin-left: auto; }
 /* 「清空」确认态（#39 两击确认） */
 .panel-action.danger { color: var(--danger); font-weight: 600; }
