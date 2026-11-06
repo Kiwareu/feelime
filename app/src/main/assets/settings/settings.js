@@ -807,6 +807,7 @@ const I18N = {
         "input.feel.kbHeightHint": "竖屏键盘的高度；键盘上拖拽调节与此处等效。",
         "input.feel.kbHeightReset": "恢复默认",
         "input.feel.keyOpacityHint": "键帽有多透。默认略透，像玻璃；拉到最右是实心。文字始终实色。",
+        "input.feel.systemBarNote": "地球仪和收起键盘那一行由手机系统设置显示或隐藏，Feelime 不另画一条，也没有开关去关它。系统画出这一条时，键盘会按系统报来的底部空白把按键抬上去，避免挡住系统按钮。",
         "input.feel.glassTitle": "液态玻璃",
         "input.feel.glassBadge": "皮肤",
         "input.feel.glassSkin": "内置皮肤",
@@ -1646,6 +1647,7 @@ const I18N = {
         "input.feel.kbHeightHint": "Portrait keyboard height; dragging on the keyboard stays equivalent.",
         "input.feel.kbHeightReset": "Reset",
         "input.feel.keyOpacityHint": "How see-through the keycaps are. The default is lightly translucent glass; the right end is solid. Labels stay opaque.",
+        "input.feel.systemBarNote": "The globe and hide-keyboard row is shown or hidden by the phone’s system settings. Feelime does not draw a second row and has no switch for it. When the system shows that row, the keys move up by the inset the system reports so they do not cover its buttons.",
         "input.feel.glassTitle": "Liquid glass",
         "input.feel.glassBadge": "Skin",
         "input.feel.glassSkin": "Built-in skins",
@@ -2692,7 +2694,7 @@ function renderFeel(state) {
     // 预览素材先行初始化（不透明度 + 亮/暗背景图），再刷预览。
     const opacity = $("keyOpacity");
     if (opacity) {
-        const opPct = Math.max(5, Math.min(100, Number(state.keyOpacity ?? 78)));
+        const opPct = Math.max(5, Math.min(100, Number(state.keyOpacity ?? 74)));
         pvKeyAlpha = opPct / 100;
         opacity.value = String(opPct);
     }
@@ -2722,8 +2724,8 @@ function renderFeel(state) {
             glassGrid.append(btn);
         });
     }
-    [["glassBlur", "glassBlur", 16, 0, 32], ["glassRadius", "glassRadius", 16, 8, 24],
-        ["panelOpacity", "panelOpacity", 72, 35, 100]].forEach(([id, key, fallback, min, max]) => {
+    [["glassBlur", "glassBlur", 26, 0, 32], ["glassRadius", "glassRadius", 22, 8, 28],
+        ["panelOpacity", "panelOpacity", 42, 35, 100]].forEach(([id, key, fallback, min, max]) => {
         const slider = $(id);
         if (!slider || document.activeElement === slider) return;
         const raw = Number(state[key]);

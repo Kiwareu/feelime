@@ -2308,7 +2308,7 @@ test('appearance page reflects state and commits themeMode / keyOpacity with the
     const world = new SettingsWorld();
     world.push({ ...BASE_STATE });
     equal(world.$('themeMode').value, 'auto', 'theme mode default auto');
-    equal(world.$('keyOpacity').value, '78', 'key opacity default 78 (glass)');
+    equal(world.$('keyOpacity').value, '74', 'key opacity default 74 (glass)');
     world.push({ ...BASE_STATE, themeMode: 'dark', keyOpacity: 45 });
     equal(world.$('themeMode').value, 'dark', 'theme mode follows state');
     equal(world.$('keyOpacity').value, '45', 'key opacity follows state');

@@ -67,9 +67,10 @@ update/），完整设置页在 `app/src/main/assets/settings/`。
 | `--card-bg` / `--card-text` / `--card-sub` | `#2b2b31` / `#e8e8e8` / `#a2a2ac` | `#f7f7fa` / `#1c1c24` / `#6a6a78` | 浮卡（常用语编辑卡、高度卡） |
 | `--input-placeholder` / `--key-subtext` | `#dedede` | `#5c616b` | 输入框占位/键面副字 |
 | `--scrim` | `#000000b8` | `#ffffffb0` | 语音浮层遮罩 |
-| `--radius-key` / `--radius-card` | `16px` / `22px` | 同左 | 圆角（皮肤页可调键圆角 8–24px，卡片约为 1.35 倍） |
-| `--key-alpha` / `--panel-alpha` | `0.78` / `0.72` | 同左 | 键帽 / 面板通透度；文字不跟随变淡 |
-| `--glass-blur` | `16px` | 同左 | 背景与壁纸的磨砂强度 |
+| `--radius-key` / `--radius-card` | `22px` / `28px` | 同左 | 圆角（皮肤页可调键圆角 8–28px，卡片约为 1.35 倍） |
+| `--key-alpha` / `--panel-alpha` | `0.72` / `0.42` | 同左 | 键帽 / 面板通透度；文字不跟随变淡 |
+| `--glass-blur` | `26px` | 同左 | 背景与壁纸的磨砂强度 |
+| `--radius-sheet` | `32px` | 同左 | 键盘底板下沿圆角 |
 
 - 强调**填充**与强调**文字**分开：绿底上用 `--accent-ink`，普通底上用
   `--accent-text`；禁止拿 `--accent` 直接当小字文字色。
@@ -85,7 +86,7 @@ update/），完整设置页在 `app/src/main/assets/settings/`。
 
 ### 1.2 几何与高度预算
 
-- 键高 `--kb-row-h`（默认 44px），键圆角默认 16px（`--radius-key`），水平间距 5px，行距 5px，
+- 键高 `--kb-row-h`（默认 44px），键圆角默认 22px（`--radius-key`），水平间距 8px，行距 7px，
   左右边缘 4px；底行 flex 权重：123=2.1、标点=1.0、空格=4.15、中英=1.15、
   enter=2.25。
 - 竖屏内容预算：工具栏 40px + 候选条 + 4 行键 + 行距 + 底部边距 ≈ 272px
@@ -1263,10 +1264,17 @@ CANCEL+DOWN+UP 终结流）不授权清理新指、注入脚本在渲染侧执�
   （displayMetrics + orientation + prefs override），**不吃窗口瞬时
   measure spec**——弹窗/旋转动画期间的过渡 spec 会把错误高度烤死；横屏
   预算加 `lastSafeBottom`；扩展带按 `min(200dp, 30%×真实屏)` 收缩。
-- **safe area**：decorView `OnApplyWindowInsetsListener` 监听导航条
-  inset（变化即重推 hello）；系统报 0 且横屏时取平台
-  `navigation_bar_height` 兜底（上限 32dp，手势条是细条；竖屏不兜）。
-  旋转时 `onConfigurationChanged` → 重推 hello。
+- **safe area**：decorView `OnApplyWindowInsetsListener` 监听底部
+  inset（变化即重推 hello）。取值是 IME 窗口 decor 与
+  `WindowMetrics` 的较大者，类型为 `navigationBars`、
+  `tappableElement`、`mandatorySystemGestures`、`captionBar` 的 bottom。
+  不收 `systemGestures`（左右返回热区过大，系统条关闭时也会垫高键盘）。
+  系统报 0 且横屏时取平台 `navigation_bar_height` 兜底（上限 32dp；
+  竖屏不兜）。旋转时 `onConfigurationChanged` → 重推 hello。
+- **系统底部栏（地球仪 / 收起键盘）**：由系统设置显示或隐藏，Feelime
+  不绘制、不提供开关、也不再在横屏 `hide(navigationBars)`。系统画出
+  这一条时，上面的 inset 会变大，键区用 `--safe-bottom` 让开，触摸仍
+  留给系统自己的按钮。系统条关闭且 inset 为 0 时，键盘铺满到底。
 - **拖动**：JS 拖动 rAF 节流（每帧一次 native 调用），native prefs
   写入 300ms debounce；高度未变不 requestLayout；松手/加减应用后高度卡
   随键盘上沿重新定位；拖动中预览数值；「恢复默认」只设待保存值不改实际

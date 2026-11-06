@@ -420,7 +420,7 @@ class UserdataBackup(
                 PREF_KEYCAP_FONT to KEYCAP_FONT_RANGE,
                 // 液态玻璃（读侧 getInt）。旧备份没有这些键。
                 "glass_blur" to (0..32),
-                "glass_radius" to (8..24),
+                "glass_radius" to (8..28),
                 "panel_opacity" to (35..100),
             ),
         )

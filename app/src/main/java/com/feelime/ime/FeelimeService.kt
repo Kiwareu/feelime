@@ -722,17 +722,9 @@ class FeelimeService : InputMethodService(), AsrEngine.Listener, InkEngineListen
     }
 
     private fun applyLandscapeNavBars() {
-        val w = window?.window ?: return
-        val ctrl = androidx.core.view.WindowCompat.getInsetsController(w, w.decorView)
-        if (resources.configuration.orientation ==
-            android.content.res.Configuration.ORIENTATION_LANDSCAPE
-        ) {
-            ctrl.systemBarsBehavior =
-                androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-            ctrl.hide(android.view.WindowInsets.Type.navigationBars())
-        } else {
-            ctrl.show(android.view.WindowInsets.Type.navigationBars())
-        }
+        // 地球仪 / 收起键盘那一行是系统导航条（或 IME 切换条），由系统设置
+        // 显示或隐藏。这里不再 hide：藏掉会把系统按钮一起藏掉。键区只按
+        // navBottomInset() 让开，系统按钮留在自己的层里可点。
     }
 
     /** puff 同款的补刀：ROM 吞掉首次 hide 时，600ms 后仍可见就再来一次。 */
@@ -4543,12 +4535,23 @@ class FeelimeService : InputMethodService(), AsrEngine.Listener, InkEngineListen
             val metrics = getSystemService(android.view.WindowManager::class.java).currentWindowMetrics
             // Gesture-start regions can be larger than the visible system
             // bar. Reserve drawing/tap occlusion, not that entire region.
+            // 系统底部条：导航条、可点元素、强制手势区、字幕条（部分机型把
+            // 输入法切换钮算在 captionBar 底）。不收 systemGestures——那是
+            // 左右返回的大热区，收进来会在「系统条关闭」时仍把键盘垫高。
+            // IME 窗口自己的 decor insets 往往比应用 WindowMetrics 更准
+            // （切换条只出现在输入法窗口上），两边取较大值。
             val types = android.view.WindowInsets.Type.navigationBars() or
-                android.view.WindowInsets.Type.tappableElement()
-            // oplus gesture nav: the collapse/switch handles sit higher than
-            // the reported nav reserve (ace: reserve 16px, handles ~24dp).
+                android.view.WindowInsets.Type.tappableElement() or
+                android.view.WindowInsets.Type.mandatorySystemGestures() or
+                android.view.WindowInsets.Type.captionBar()
             val floor = oplusInsetFloor()
-            val reserved = maxOf(metrics.windowInsets.getInsets(types).bottom, floor)
+            val decorBottom = window?.window?.decorView?.rootWindowInsets
+                ?.getInsets(types)?.bottom ?: 0
+            val reserved = maxOf(
+                metrics.windowInsets.getInsets(types).bottom,
+                decorBottom,
+                floor,
+            )
             if (reserved == 0) return 0
             // #39 横屏底部【恢复】safe area（用户 2026-10-07 复核拍板）：
             // 导航条可见性跟随宿主 app，第三方 app 里 IME 的 hide 藏不掉

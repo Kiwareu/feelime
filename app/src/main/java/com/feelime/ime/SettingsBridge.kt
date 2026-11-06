@@ -233,7 +233,7 @@ fun readKbLayout(context: Context): String {
 
 /** 键帽不透明度（0-100，默认 78）：液态玻璃略透，100 为实心键帽。 */
 const val PREF_KEY_OPACITY = "key_opacity"
-/** 液态玻璃：磨砂强度 0..32px、键帽圆角 8..24px、面板通透 35..100。 */
+/** 液态玻璃：磨砂强度 0..32px、键帽圆角 8..28px、面板通透 35..100。 */
 const val PREF_GLASS_BLUR = "glass_blur"
 const val PREF_GLASS_RADIUS = "glass_radius"
 const val PREF_PANEL_OPACITY = "panel_opacity"
@@ -253,8 +253,8 @@ const val KB_HEIGHT_PORTRAIT_KEY = "keyboard_height_portrait"
 
 fun readKeyOpacity(context: Context): Int =
     context.getSharedPreferences(KEYBOARD_PREFS_FILE, Context.MODE_PRIVATE)
-        .getInt(PREF_KEY_OPACITY, 78)
-        .let { if (it in 0..100) it else 78 }
+        .getInt(PREF_KEY_OPACITY, 74)
+        .let { if (it in 0..100) it else 74 }
 
 data class GlassSkin(
     val id: String,
@@ -270,7 +270,7 @@ data class GlassSkin(
 
 /** 内置液态玻璃皮肤。点一套会同时写下色调、透明度、模糊和圆角。 */
 val GLASS_SKINS = listOf(
-    GlassSkin("liuli", "classic", -1, 78, 78, 16, 16, 72, 0),
+    GlassSkin("liuli", "classic", -1, 46, 74, 26, 22, 42, 8),
     GlassSkin("ocean", "ocean", -1, 64, 74, 18, 18, 66, 0),
     GlassSkin("violet", "violet", -1, 58, 76, 16, 18, 68, 0),
     GlassSkin("amber", "amber", -1, 66, 80, 14, 16, 74, 0),
@@ -282,18 +282,18 @@ val GLASS_SKINS = listOf(
 
 fun readGlassBlur(context: Context): Int =
     context.getSharedPreferences(KEYBOARD_PREFS_FILE, Context.MODE_PRIVATE)
-        .getInt(PREF_GLASS_BLUR, 16)
-        .takeIf { it in 0..32 } ?: 16
+        .getInt(PREF_GLASS_BLUR, 26)
+        .takeIf { it in 0..32 } ?: 26
 
 fun readGlassRadius(context: Context): Int =
     context.getSharedPreferences(KEYBOARD_PREFS_FILE, Context.MODE_PRIVATE)
-        .getInt(PREF_GLASS_RADIUS, 16)
-        .takeIf { it in 8..24 } ?: 16
+        .getInt(PREF_GLASS_RADIUS, 22)
+        .takeIf { it in 8..28 } ?: 22
 
 fun readPanelOpacity(context: Context): Int =
     context.getSharedPreferences(KEYBOARD_PREFS_FILE, Context.MODE_PRIVATE)
-        .getInt(PREF_PANEL_OPACITY, 72)
-        .takeIf { it in 35..100 } ?: 72
+        .getInt(PREF_PANEL_OPACITY, 42)
+        .takeIf { it in 35..100 } ?: 42
 
 fun readGlassSkin(context: Context): String {
     // 空串 = 还没套用皮肤，或套用后又单独调过。不要把缺省伪装成「琉璃青」，
@@ -1997,7 +1997,7 @@ class SettingsBridge(
 
     @JavascriptInterface
     fun setGlassRadius(px: Int, token: String) = guarded(token) {
-        if (px !in 8..24) return@guarded
+        if (px !in 8..28) return@guarded
         writeGlassTune(PREF_GLASS_RADIUS, px)
     }
 
