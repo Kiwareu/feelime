@@ -348,7 +348,7 @@
         });
     }
 
-    const KEYBOARD_VERSION = '3.74.5';
+    const KEYBOARD_VERSION = '3.74.6';
     // #39-12 收口：整屏级互斥视图注册表（单一事实源）。统计浮层、
     // 定制面板两轮同款叠层事故的根因是互关调用散装在各个 toggle 里，
     // 新视图忘了关所有人就叠加。现在：新视图在此登记一次（怎么判开、
@@ -4253,11 +4253,14 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
             bubble.textContent = glyph;
             bubble.hidden = false;
             const rect = button.getBoundingClientRect();
-            // 与 openPopup 同一套钳制：水平贴边收拢，垂直不越出视口顶。
-            const left = Math.max(4, Math.min(innerWidth - bubble.offsetWidth - 4,
-                rect.left + rect.width / 2 - bubble.offsetWidth / 2));
+            const w = bubble.offsetWidth || 48;
+            const h = bubble.offsetHeight || 54;
+            // 始终放在按键正上方，绝不落到按键下缘或键盘底部。
+            const left = Math.max(4, Math.min(innerWidth - w - 4,
+                rect.left + rect.width / 2 - w / 2));
+            const top = rect.top > 12 ? Math.max(2, rect.top - h - 8) : rect.top - h - 8;
             bubble.style.left = left + 'px';
-            bubble.style.top = Math.max(2, rect.top - bubble.offsetHeight - 6) + 'px';
+            bubble.style.top = top + 'px';
         }
 
         /** flick 判定后把气泡换成实际将上屏的字符（键位不动，仅换文字）。 */

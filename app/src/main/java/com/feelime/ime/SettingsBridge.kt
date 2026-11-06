@@ -375,7 +375,7 @@ fun readLandscapeOpacity(context: Context): Int =
 
 fun readKeyBubble(context: Context): Boolean =
     context.getSharedPreferences(KEYBOARD_PREFS_FILE, Context.MODE_PRIVATE)
-        .getBoolean(PREF_KEY_BUBBLE, false)
+        .getBoolean(PREF_KEY_BUBBLE, true)
 
 /** 键盘高度（竖屏存值；pref 物理px，对外统一转 CSS px；0=默认）。 */
 fun readKbHeightPortrait(context: Context): Int {

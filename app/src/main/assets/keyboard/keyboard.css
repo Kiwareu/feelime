@@ -226,13 +226,10 @@ button { font: inherit; }
      * mirrors the same growth so the row budget shrinks instead of
      * overflowing. */
     padding: var(--preedit-band, 18px) 10px calc(8px + var(--safe-bottom, 0px) + var(--kb-bottom-pad, 0px));
-    /* 一整块厚霜玻璃：色相来自皮肤，模糊把背后的页面打成光，填色挡住正文。
-     * 底部大圆角：系统导航/输入法切换条在 --safe-bottom 里，键区停在它上面。 */
-    background:
-        linear-gradient(180deg, rgba(255, 255, 255, .38), transparent 22%),
-        linear-gradient(180deg, var(--sheet-top), var(--sheet-bottom));
-    -webkit-backdrop-filter: blur(var(--glass-blur, 28px)) saturate(1.45);
-    backdrop-filter: blur(var(--glass-blur, 28px)) saturate(1.45);
+    /* 底色交给 #glassField，避免 #softKeyboard 上的 backdrop-filter
+     * 把 position:fixed 浮层（按键气泡、长按弹层）的坐标系从视口改到
+     * 键盘底板——否则 Y 会多算一段空白带，掉到屏幕最底下。 */
+    background: transparent;
     border-radius: 26px 26px var(--radius-sheet, 32px) var(--radius-sheet, 32px);
     /* clip, not hidden: a focused editor-strip input auto-SCROLLS a
        hidden-overflow container (programmatic scroll), shoving every
@@ -647,7 +644,7 @@ body[data-side-content="blank"] #sideGrid { display: none; }
 }
 body[data-bg-image="on"] #bgImage { display: block; }
 body[data-bg-image="on"] #softKeyboard { background: transparent; }
-/* 水光只铺在同一块霜面上，不再另用固定的橙/青/绿把皮肤色盖掉。 */
+/* 厚霜与水光都放在 #glassField 上（它是叶子层，不包含任何 fixed 浮层）。 */
 #glassField {
     position: absolute;
     inset: 0;
@@ -655,15 +652,20 @@ body[data-bg-image="on"] #softKeyboard { background: transparent; }
     pointer-events: none;
     background:
         linear-gradient(180deg, var(--glass-sheen), transparent 24%),
-        radial-gradient(70% 42% at 50% -8%, rgba(255, 255, 255, .42), transparent 68%);
+        radial-gradient(70% 42% at 50% -8%, rgba(255, 255, 255, .42), transparent 68%),
+        linear-gradient(180deg, var(--sheet-top), var(--sheet-bottom));
+    -webkit-backdrop-filter: blur(var(--glass-blur, 28px)) saturate(1.45);
+    backdrop-filter: blur(var(--glass-blur, 28px)) saturate(1.45);
 }
 body[data-bg-image="on"] #softKeyboard {
-    background:
-        linear-gradient(180deg, rgba(255, 255, 255, .28), transparent 24%),
-        linear-gradient(180deg, var(--glass-veil), var(--glass-veil-2));
+    background: transparent;
 }
 body[data-bg-image="on"] #glassField {
-    background: linear-gradient(180deg, rgba(255, 255, 255, .34), transparent 30%);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, .34), transparent 30%),
+        linear-gradient(180deg, var(--glass-veil), var(--glass-veil-2));
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
 }
 body[data-bg-image="on"] #bgImage {
     filter: blur(calc(var(--glass-blur, 28px) + 10px));
@@ -835,6 +837,8 @@ body.settings-page #candidateBar > .tool { display: none; }
     color: var(--accent-text);
     background: var(--pill);
     font-weight: 650;
+}
+body.preedit-frame .candidate.first {
     box-shadow: inset 0 0 0 1px var(--accent);
 }
 /* 中英混输：拉丁词候选加一枚小 EN，方便和拼音缩写分开看。 */
@@ -2474,18 +2478,20 @@ body.landscape #voiceGuide { display: none; }
     position: fixed;
     z-index: 30;
     pointer-events: none;
-    min-width: 44px;
-    height: 50px;
-    padding: 0 12px;
+    min-width: 48px;
+    height: 54px;
+    padding: 0 14px;
     border-radius: calc(var(--radius-key) - 2px);
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--panel);
+    background: var(--pill);
     color: var(--text);
-    box-shadow: 0 3px 12px #000a;
-    font-size: 26px;
-    font-weight: 500;
+    box-shadow:
+        inset 0 1px 0 var(--glass-sheen),
+        0 8px 20px rgba(0, 0, 0, .24);
+    font-size: 28px;
+    font-weight: 560;
     line-height: 1;
 }
 #keyBubble[hidden] { display: none; }

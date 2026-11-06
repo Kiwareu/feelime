@@ -5420,6 +5420,8 @@ test('key bubble stays off by default; hello arms it per press', {since: '3.60.0
     world.touchDown(key);
     equal(bubble.hidden, false, 'hello keyBubble=true shows the bubble on press');
     equal(bubble.textContent, 'h', 'bubble shows the pressed glyph');
+    const keyRect = key.getBoundingClientRect();
+    assert(parseFloat(bubble.style.top) < keyRect.top, 'bubble sits above the pressed key');
     world.touchUp(key);
     // 停留窗口（验收 2026-09-24，默认 400ms）：松手不立刻消失。
     assert(!bubble.hidden, 'release keeps the bubble through the linger window');
