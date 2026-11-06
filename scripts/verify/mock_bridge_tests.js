@@ -6950,12 +6950,13 @@ test('shift applies to accented popup selection (é → É)', {since: '3.59.0'},
 
 test('clipboard button opens panel and requests clipboard', () => {
     const world = fresh();
+    const before = world.native.of('getClipboard').length;
     world.tap(world.$('clipboardButton'));
     assert(!world.$('panelLayer').hidden, 'panel visible');
     assert(world.$('qwertyLayer').hidden, 'letters hidden behind panel');
     assert(world.$('panelClose'), 'close control exists');
-    equal(world.native.of('getClipboard').length, 1, 'clipboard requested');
-    equal(world.native.of('getClipboard')[0].args[0], 'tok-1', 'token attached');
+    equal(world.native.of('getClipboard').length, before + 1, 'clipboard requested');
+    equal(world.native.of('getClipboard').slice(-1)[0].args[0], 'tok-1', 'token attached');
     world.tap(world.$('panelClose'));
     assert(world.$('panelLayer').hidden, 'panel closed');
     assert(!world.$('qwertyLayer').hidden, 'letters restored');
@@ -7005,6 +7006,24 @@ test('remove and clear clipboard hit the bridge with hex ids', () => {
         world.tap(world.$('panelClear'));
     }
     equal(world.native.of('clearClipboard').length, 1, 'clearClipboard called');
+});
+
+test('clipboard badge shows the count; a mixed clip can paste just the link', {since: '3.74.2'}, () => {
+    const world = fresh();
+    world.clipboard([
+        { id: 'a1', time: 1, text: '订单号 13800138000 详见 https://example.com/a 谢谢' },
+        { id: 'b2', time: 2, text: '另一条', group: '工作' },
+    ], ['工作']);
+    const badge = world.$('clipboardButton').querySelector('.clip-count');
+    equal(badge.hidden, false, 'count badge visible');
+    equal(badge.textContent, '2', 'count is the number of clips');
+    world.tap(world.$('clipboardButton'));
+    const link = [...world.document.querySelectorAll('.clip-extract')]
+        .find(node => /example\.com/.test(node.textContent));
+    assert(link, 'link chip is offered');
+    world.tap(link);
+    const pasted = world.native.of('pasteText').slice(-1)[0] || world.native.of('commitText').slice(-1)[0];
+    equal(pasted.args[0], 'https://example.com/a', 'only the url is pasted');
 });
 
 test('empty panel collapses the list block instead of a blank slab', {since: '3.55.0'}, () => {
@@ -7061,7 +7080,7 @@ test('P3b panel rows use native clicks (no touch handlers)', () => {
 
 test('over-long clipboard item renders disabled and never commits', () => {
     const world = fresh();
-    const huge = 'x'.repeat(2001);
+    const huge = 'x'.repeat(100001);
     world.clipboard([{ id: 'big', time: 1, text: huge }]);
     world.tap(world.$('clipboardButton'));
     const row = world.document.querySelectorAll('.panel-item')[0];

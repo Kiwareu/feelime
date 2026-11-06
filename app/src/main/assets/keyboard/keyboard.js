@@ -219,6 +219,18 @@
         "暂无单字": "No single-character candidates",
         "暂无候选": "No candidates",
         "剪贴板只留在这台手机上，复制的内容会出现在这里": "Clipboard stays on this phone. Copied text shows up here.",
+        "全部": "All",
+        "未分组": "Ungrouped",
+        "＋分组": "＋ Group",
+        "分组名": "Group name",
+        "加入": "Add",
+        "移到分组": "Move to group",
+        "链接": "Link",
+        "邮箱": "Email",
+        "号码": "Number",
+        "数字": "Digits",
+        "收入自造词": "Save to my words",
+        "已收入自造词": "Saved to my words",
         "暂无常用语，点右上角「＋添加」": "No saved phrases. Tap Add to create one.",
         "…（内容过长）": "… (text truncated)",
         "组合过长，已清空": "Composition too long; cleared",
@@ -335,7 +347,7 @@
         });
     }
 
-    const KEYBOARD_VERSION = '3.74.1';
+    const KEYBOARD_VERSION = '3.74.2';
     // #39-12 收口：整屏级互斥视图注册表（单一事实源）。统计浮层、
     // 定制面板两轮同款叠层事故的根因是互关调用散装在各个 toggle 里，
     // 新视图忘了关所有人就叠加。现在：新视图在此登记一次（怎么判开、
@@ -583,7 +595,8 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
     ];
     // Over-long clipboard items cannot pass the native commitText limit, so
     // they render disabled in the panel (stored in full, paste blocked).
-    const MAX_COMMIT_CODE_POINTS = 2000;
+    // 粘贴上限：再大就容易把输入框和桥一次撑爆。存储侧另有约 2MB / 300 条。
+    const MAX_COMMIT_CODE_POINTS = 100000;
     // Cursor scrub: one caret step per 12px of drag at the default
     // 3x speed (SCRUB_UNIT_BASE_PX / scrubSpeed), counted after the fixed
     // recognition-threshold crossing. Exposes 1x..5x in the quick
@@ -1554,6 +1567,8 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
             this.itemMenuOpen = null;
             this.panelEditItem = null;
             this.clipboardItems = [];
+            this.clipboardGroups = [];
+            this.clipGroupFilter = 'all';
             this.favoriteItems = [];
             this.popup = null;
             this.popupEndEvents = new WeakSet();
@@ -10547,7 +10562,57 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
             const empty = document.getElementById('panelEmpty');
             list.replaceChildren();
             const layer = document.getElementById('panelLayer');
-            const items = this.panelTab === 'clipboard' ? this.clipboardItems : this.favoriteItems;
+            let items = this.panelTab === 'clipboard' ? this.clipboardItems : this.favoriteItems;
+            if (this.panelTab === 'clipboard') {
+                const bar = document.createElement('div');
+                bar.className = 'clip-groups';
+                const filters = [['all', t("全部")], ['', t("未分组")]]
+                    .concat((this.clipboardGroups || []).map(name => [name, name]));
+                filters.forEach(([id, label]) => {
+                    const chip = document.createElement('button');
+                    chip.type = 'button';
+                    chip.className = 'clip-chip' + (this.clipGroupFilter === id ? ' on' : '');
+                    chip.textContent = label;
+                    chip.addEventListener('click', event => {
+                        event.stopPropagation();
+                        this.clipGroupFilter = id;
+                        this.renderPanel();
+                    });
+                    bar.append(chip);
+                });
+                const adder = document.createElement('button');
+                adder.type = 'button';
+                adder.className = 'clip-chip';
+                adder.textContent = t("＋分组");
+                adder.addEventListener('click', event => {
+                    event.stopPropagation();
+                    if (bar.querySelector('.clip-group-input')) return;
+                    const input = document.createElement('input');
+                    input.className = 'phrase-input clip-group-input';
+                    input.maxLength = 16;
+                    input.placeholder = t("分组名");
+                    input.addEventListener('focus', () => this.setPanelInput(true));
+                    const commitName = () => {
+                        const name = input.value.trim();
+                        if (name && typeof Native.addClipboardGroup === 'function') {
+                            this.call(() => Native.addClipboardGroup(name, this.token));
+                        }
+                        if (!this.phraseCardOpen()) this.setPanelInput(false);
+                        input.remove();
+                    };
+                    input.addEventListener('keydown', event => {
+                        if (event.key === 'Enter') commitName();
+                    });
+                    input.addEventListener('blur', () => setTimeout(commitName, 180));
+                    bar.append(input);
+                    input.focus();
+                });
+                bar.append(adder);
+                list.append(bar);
+                const filter = this.clipGroupFilter;
+                if (filter === '') items = items.filter(item => !item.group);
+                else if (filter && filter !== 'all') items = items.filter(item => item.group === filter);
+            }
             empty.hidden = items.length > 0;
             // 空态不铺整块列表背景（验收反馈）：列表收起、提示只占一行，
             // 其余空间透出键盘背景，不再是一大块空面板。
@@ -10602,7 +10667,43 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
                         event.stopPropagation();
                         this.call(() => Native.removeClipboard(item.id, this.token));
                     });
-                    row.append(preview, remove);
+                    const body = document.createElement('span');
+                    body.className = 'clip-body';
+                    body.append(preview);
+                    const pieces = this.clipPieces(item.text);
+                    if (pieces.length) {
+                        const extracts = document.createElement('span');
+                        extracts.className = 'clip-extracts';
+                        pieces.forEach(piece => {
+                            const chip = document.createElement('button');
+                            chip.type = 'button';
+                            chip.className = 'clip-extract';
+                            chip.textContent = t(piece.kind) + ' ' + (piece.value.length > 18
+                                ? piece.value.slice(0, 18) + '…' : piece.value);
+                            chip.addEventListener('click', event => {
+                                event.stopPropagation();
+                                this.call(() => {
+                                    if (typeof Native.pasteText === 'function') {
+                                        Native.pasteText(piece.value, this.token);
+                                    } else {
+                                        Native.commitText(piece.value, this.token);
+                                    }
+                                });
+                                this.closePanel();
+                            });
+                            extracts.append(chip);
+                        });
+                        body.append(extracts);
+                    }
+                    const groupBtn = document.createElement('button');
+                    groupBtn.type = 'button';
+                    groupBtn.className = 'clip-extract';
+                    groupBtn.textContent = item.group || t("移到分组");
+                    groupBtn.addEventListener('click', event => {
+                        event.stopPropagation();
+                        this.openClipGroupMenu(item, groupBtn);
+                    });
+                    row.append(body, groupBtn, remove);
                     // Native clicks only: bindTouch's preventDefault would kill
                     // panel scrolling AND bubble a second row click on remove taps
                     // .
@@ -11088,6 +11189,13 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
                 });
                 menu.append(button);
             };
+            const han = String(candidate.text || '');
+            if (han.length >= 2 && han.length <= 8 && /^[\u4e00-\u9fff]+$/.test(han) &&
+                typeof Native.learnUserWord === 'function') {
+                build(t("收入自造词"), '', () => {
+                    this.call(() => Native.learnUserWord(han, this.token));
+                });
+            }
             if (deletable) {
                 build(t("删除自造词"), 'danger', () => this.confirmDeleteCandidate(candidate));
             } else {
@@ -11178,10 +11286,72 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
         }
 
         onClipboard(payload) {
+            this.clipboardGroups = Array.isArray(payload.groups) ? payload.groups.map(String) : [];
             this.clipboardItems = (payload.items || []).map(item => ({
                 id: String(item.id), text: String(item.text), time: Number(item.time) || 0,
+                group: String(item.group || ''),
             }));
+            this.syncClipboardBadge();
             if (this.panelOpen && this.panelTab === 'clipboard') this.renderPanel();
+        }
+
+        onLearnNote(payload) {
+            const text = payload && payload.text;
+            if (text) this.showToast(String(text));
+        }
+
+        syncClipboardBadge() {
+            const btn = document.getElementById('clipboardButton');
+            if (!btn) return;
+            const badge = btn.querySelector('.clip-count');
+            const count = (this.clipboardItems || []).length;
+            if (badge) {
+                badge.textContent = count > 99 ? '99+' : String(count);
+                badge.hidden = count <= 0;
+            }
+            btn.setAttribute('aria-label', count ? t("剪贴板") + ' ' + count : t("剪贴板"));
+        }
+
+        /** 从一段混杂文本里拆出链接、邮箱、号码和连续中文。整段本身不算。 */
+        clipPieces(text) {
+            const source = String(text || '');
+            const found = [];
+            const seen = new Set();
+            const add = (kind, value) => {
+                const clean = String(value || '').trim().replace(/[),.;，。、]+$/u, '');
+                if (clean.length < 2 || seen.has(kind + '\n' + clean)) return;
+                if (clean === source.trim()) return;
+                seen.add(kind + '\n' + clean);
+                found.push({ kind, value: clean });
+            };
+            for (const match of source.matchAll(/https?:\/\/[^\s<>"'，。]+/g)) add('链接', match[0]);
+            for (const match of source.matchAll(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g)) add('邮箱', match[0]);
+            for (const match of source.matchAll(/1[3-9]\d{9}/g)) add('号码', match[0]);
+            for (const match of source.matchAll(/\d{4,}/g)) add('数字', match[0]);
+            const han = source.match(/[\u4e00-\u9fff]{2,}/g) || [];
+            han.slice(0, 3).forEach(part => add('中文', part));
+            return found.slice(0, 6);
+        }
+
+        openClipGroupMenu(item, anchor) {
+            const menu = document.getElementById('itemMenu');
+            this.closeItemMenu();
+            const choices = [''].concat(this.clipboardGroups || []);
+            choices.forEach(name => {
+                const button = document.createElement('button');
+                button.textContent = name || t("未分组");
+                button.addEventListener('click', () => {
+                    this.closeItemMenu();
+                    if (typeof Native.setClipboardGroup === 'function') {
+                        this.call(() => Native.setClipboardGroup(item.id, name, this.token));
+                    }
+                });
+                menu.append(button);
+            });
+            menu.classList.add('open');
+            const rect = anchor.getBoundingClientRect();
+            menu.style.left = Math.max(4, rect.left) + 'px';
+            menu.style.top = Math.max(4, rect.top - 8) + 'px';
         }
 
         /** 导入备份后原生把 localStorage 级设置推回来（userdata.md §1.4）。
@@ -11776,6 +11946,7 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
             // design §7.4: the candidate injection matches against this
             // cache - it must be warm before the favorites panel ever opens.
             this.call(() => Native.getFavorites(this.token));
+            this.call(() => Native.getClipboard(this.token));
             // 备份数据源（userdata.md §1.4/§1.5）：先按 rev 拉取恢复值，
             // 再把本地镜像推给原生——两个方向都走一遍，导入与修改才收敛。
             pullStores(this.token);
@@ -12329,6 +12500,7 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
         // 工具位（debugState 同类）：自定义行缩放器，mock/预览直调锁数值。
         fitCustomRow: strip => keyboard.fitCustomRow(strip),
         onClipboard: payload => keyboard.onClipboard(payload),
+        onLearnNote: payload => keyboard.onLearnNote(payload),
         onFavorites: payload => keyboard.onFavorites(payload),
         onStoresRestored: stores => keyboard.onStoresRestored(stores),
         onPanelCommit: payload => keyboard.onPanelCommit(payload),

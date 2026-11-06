@@ -56,6 +56,8 @@ class FeelimeService : InputMethodService(), AsrEngine.Listener, InkEngineListen
     private lateinit var favoritesStore: com.feelime.ime.panel.FavoritesStore
     private val favoritesListener: () -> Unit = { main.post { pushFavorites() } }
     private var associationGeneration = 0L
+    private var lastAssocAnchor: String? = null
+    private val assocHabit by lazy { com.feelime.ime.engine.AssocHabit(this) }
     private var associationContextGeneration = 0L
     private var cancelAssociation: (() -> Unit)? = null
     private var keyboardView: WebView? = null
@@ -2649,11 +2651,14 @@ class FeelimeService : InputMethodService(), AsrEngine.Listener, InkEngineListen
         val payload = JSONObject().put(
             "items",
             JSONArray().apply {
+                val groups = clipboardStore.groupMap()
                 items.forEach { item ->
-                    put(JSONObject().put("id", item.id).put("time", item.time).put("text", item.text))
+                    put(JSONObject().put("id", item.id).put("time", item.time)
+                        .put("text", item.text).put("group", groups[item.id] ?: ""))
                 }
             },
-        )
+        ).put("groups", JSONArray(clipboardStore.groupNames()))
+            .put("count", items.size)
         evaluate("window.Feelime && window.Feelime.onClipboard && window.Feelime.onClipboard($payload)")
     }
 
@@ -2723,6 +2728,11 @@ class FeelimeService : InputMethodService(), AsrEngine.Listener, InkEngineListen
 
     /** 推送/清空联想词（docs/design/association.md §3）。 */
     private fun requestAssociation(committed: String) {
+        val previous = lastAssocAnchor
+        if (!previous.isNullOrEmpty() && previous != committed) {
+            assocHabit.note(previous, committed)
+        }
+        lastAssocAnchor = committed
         val request = ++associationGeneration
         val input = coordinator.userInputGeneration
         val editor = inputConnectionGeneration
@@ -2734,7 +2744,7 @@ class FeelimeService : InputMethodService(), AsrEngine.Listener, InkEngineListen
                     editor == inputConnectionGeneration &&
                     panel == panelRouteGeneration && readAssociation(applicationContext) &&
                     !panelInputActive && keyboardView != null
-                ) pushAssoc(words)
+                ) pushAssoc(assocHabit.promote(committed, words))
             }
         }
     }
@@ -4375,6 +4385,66 @@ class FeelimeService : InputMethodService(), AsrEngine.Listener, InkEngineListen
         }
 
         @JavascriptInterface
+        fun addClipboardGroup(name: String, token: String) = guarded(token, limited = true) {
+            if (!clipboardStore.addGroup(name)) {
+                rejectedCalls += 1
+                return@guarded
+            }
+            main.post { pushClipboard() }
+        }
+
+        @JavascriptInterface
+        fun setClipboardGroup(id: String, group: String, token: String) = guarded(token, limited = true) {
+            if (!isPanelId(id) || group.length > 16) {
+                rejectedCalls += 1
+                return@guarded
+            }
+            clipboardStore.setItemGroup(id, group)
+            main.post { pushClipboard() }
+        }
+
+        /** 长按候选收入自造词。只接受 1–8 个汉字，自动注音，已有则不重复。 */
+        @JavascriptInterface
+        fun learnUserWord(text: String, token: String) = guarded(token, limited = false) {
+            val word = text.trim()
+            if (word.isEmpty() || word.length > 8 || word.any { it !in '\u4E00'..'\u9FFF' }) {
+                rejectedCalls += 1
+                return@guarded
+            }
+            onMain {
+                val store = com.feelime.ime.engine.CustomPhraseStore
+                val state = store.load(this@FeelimeService)
+                val note = when {
+                    state.user.any { it.first == word } -> "已在自造词里"
+                    state.user.size >= 200 -> "自造词已满 200 条"
+                    else -> {
+                        val auto = store.autoPinyinCodes(this@FeelimeService, word)
+                        if (auto.isEmpty()) "这个词没法自动注音，请到设置里手动加"
+                        else {
+                            store.save(
+                                this@FeelimeService,
+                                state.enabled,
+                                state.items,
+                                state.imported,
+                                state.user + (word to auto[0]),
+                                englishEnabled = state.englishEnabled,
+                                symbolRanks = state.symbolRanks,
+                                symbolFreqSort = state.symbolFreqSort,
+                            )
+                            sendBroadcast(
+                                android.content.Intent(ACTION_CUSTOM_PHRASES_CHANGED)
+                                    .setPackage(packageName),
+                            )
+                            "已收入自造词「$word」"
+                        }
+                    }
+                }
+                val payload = JSONObject().put("text", note)
+                evaluate("window.Feelime && window.Feelime.onLearnNote && window.Feelime.onLearnNote($payload)")
+            }
+        }
+
+        @JavascriptInterface
         fun getFavorites(token: String) = guarded(token, limited = false) {
             onMain { pushFavorites() }
         }
@@ -5026,7 +5096,7 @@ class FeelimeService : InputMethodService(), AsrEngine.Listener, InkEngineListen
         val CAPABILITIES get() = BridgeContract.CAPABILITIES
         const val MAX_JSON_CHARS = 4096
         const val MAX_CANDIDATE_ID_CHARS = 96
-        const val MAX_COMMIT_CODE_POINTS = 2000
+        const val MAX_COMMIT_CODE_POINTS = 100_000
         const val MAX_CURSOR_DELTA = 256
         const val MAX_CURSOR_CONTEXT_CHARS = 2048
         const val MAX_PENDING_CURSOR_DELTA = 16_384L

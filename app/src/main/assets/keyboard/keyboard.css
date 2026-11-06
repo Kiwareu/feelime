@@ -660,6 +660,38 @@ body[data-preedit-font="xlarge"] { --preedit-font-scale: 1.35; --preedit-band: 2
     background: hsl(var(--bg-hue) calc(20% * var(--bg-sat, 1)) 50% / calc(var(--panel-alpha) * .55));
     box-shadow: inset 0 1px 0 var(--glass-sheen);
 }
+#clipboardButton { position: relative; }
+.clip-count {
+    position: absolute;
+    top: -3px;
+    right: -4px;
+    min-width: 14px;
+    height: 14px;
+    padding: 0 3px;
+    border-radius: 8px;
+    background: var(--accent, #23c890);
+    color: var(--accent-ink, #07180e);
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 14px;
+    text-align: center;
+    pointer-events: none;
+}
+.clip-count[hidden] { display: none !important; }
+.clip-groups { display: flex; flex-wrap: wrap; gap: 6px; padding: 2px 2px 8px; }
+.clip-chip, .clip-extract, .clip-group-input {
+    border: 0;
+    border-radius: 999px;
+    background: var(--pill);
+    color: var(--text);
+    font-size: 11px;
+    padding: 4px 8px;
+}
+.clip-chip.on { color: var(--accent-ink); background: var(--accent); }
+.clip-extracts { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.clip-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.clip-group-input { width: 7em; font: inherit; }
+.panel-item { align-items: flex-start; }
 #candidateBar .tool {
     flex: none;
     width: 32px;
@@ -1881,7 +1913,8 @@ body.landscape .panel-head { margin: var(--preedit-band, 18px) 0 4px; }
 
 .panel-item {
     display: flex;
-    align-items: center;
+    flex-wrap: wrap;
+    align-items: flex-start;
     gap: 8px;
     width: 100%;
     min-height: 44px;
