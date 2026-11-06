@@ -56,6 +56,8 @@ class FeelimeService : InputMethodService(), AsrEngine.Listener, InkEngineListen
     private lateinit var favoritesStore: com.feelime.ime.panel.FavoritesStore
     private val favoritesListener: () -> Unit = { main.post { pushFavorites() } }
     private var associationGeneration = 0L
+    private var lastAssocAnchor: String? = null
+    private val assocHabit by lazy { com.feelime.ime.engine.AssocHabit(this) }
     private var associationContextGeneration = 0L
     private var cancelAssociation: (() -> Unit)? = null
     private var keyboardView: WebView? = null
@@ -722,17 +724,9 @@ class FeelimeService : InputMethodService(), AsrEngine.Listener, InkEngineListen
     }
 
     private fun applyLandscapeNavBars() {
-        val w = window?.window ?: return
-        val ctrl = androidx.core.view.WindowCompat.getInsetsController(w, w.decorView)
-        if (resources.configuration.orientation ==
-            android.content.res.Configuration.ORIENTATION_LANDSCAPE
-        ) {
-            ctrl.systemBarsBehavior =
-                androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-            ctrl.hide(android.view.WindowInsets.Type.navigationBars())
-        } else {
-            ctrl.show(android.view.WindowInsets.Type.navigationBars())
-        }
+        // 地球仪 / 收起键盘那一行是系统导航条（或 IME 切换条），由系统设置
+        // 显示或隐藏。这里不再 hide：藏掉会把系统按钮一起藏掉。键区只按
+        // navBottomInset() 让开，系统按钮留在自己的层里可点。
     }
 
     /** puff 同款的补刀：ROM 吞掉首次 hide 时，600ms 后仍可见就再来一次。 */
@@ -2565,6 +2559,7 @@ class FeelimeService : InputMethodService(), AsrEngine.Listener, InkEngineListen
             .put("userFontDigest", KeyboardFontStore.current(this)?.digest ?: "")
             .put("preeditFont", preeditFont())
             .put("preeditBold", readPreeditBold(this))
+            .put("preeditFrame", readPreeditFrame(this))
             .put("oneHand", readOneHand(this))
             .put("oneHandPad", readOneHandPad(this))
             .put("oneHandSide", readOneHandSide(this))
@@ -2574,6 +2569,10 @@ class FeelimeService : InputMethodService(), AsrEngine.Listener, InkEngineListen
             .put("bgImageLightSource", readBgImageSource(this, "light"))
             .put("bgImageDarkSource", readBgImageSource(this, "dark"))
             .put("keyOpacity", readKeyOpacity(this))
+            .put("glassBlur", readGlassBlur(this))
+            .put("glassRadius", readGlassRadius(this))
+            .put("panelOpacity", readPanelOpacity(this))
+            .put("glassSkin", readGlassSkin(this))
             .put("keyBubble", readKeyBubble(this))
             .put("bubbleLinger", readBubbleLinger(this))
             // #39 横屏三级页三项 + 挖孔安全区实测值（css px，竖屏恒 0）。
@@ -2653,11 +2652,14 @@ class FeelimeService : InputMethodService(), AsrEngine.Listener, InkEngineListen
         val payload = JSONObject().put(
             "items",
             JSONArray().apply {
+                val groups = clipboardStore.groupMap()
                 items.forEach { item ->
-                    put(JSONObject().put("id", item.id).put("time", item.time).put("text", item.text))
+                    put(JSONObject().put("id", item.id).put("time", item.time)
+                        .put("text", item.text).put("group", groups[item.id] ?: ""))
                 }
             },
-        )
+        ).put("groups", JSONArray(clipboardStore.groupNames()))
+            .put("count", items.size)
         evaluate("window.Feelime && window.Feelime.onClipboard && window.Feelime.onClipboard($payload)")
     }
 
@@ -2727,6 +2729,11 @@ class FeelimeService : InputMethodService(), AsrEngine.Listener, InkEngineListen
 
     /** 推送/清空联想词（docs/design/association.md §3）。 */
     private fun requestAssociation(committed: String) {
+        val previous = lastAssocAnchor
+        if (!previous.isNullOrEmpty() && previous != committed) {
+            assocHabit.note(previous, committed)
+        }
+        lastAssocAnchor = committed
         val request = ++associationGeneration
         val input = coordinator.userInputGeneration
         val editor = inputConnectionGeneration
@@ -2738,7 +2745,7 @@ class FeelimeService : InputMethodService(), AsrEngine.Listener, InkEngineListen
                     editor == inputConnectionGeneration &&
                     panel == panelRouteGeneration && readAssociation(applicationContext) &&
                     !panelInputActive && keyboardView != null
-                ) pushAssoc(words)
+                ) pushAssoc(assocHabit.promote(committed, words))
             }
         }
     }
@@ -3276,20 +3283,17 @@ class FeelimeService : InputMethodService(), AsrEngine.Listener, InkEngineListen
                     (getSystemService(VIBRATOR_SERVICE) as? Vibrator)
                 }
                 if (vibrator == null || !vibrator.hasVibrator()) return
-                // 波形 one-shot 而非 createPredefined(EFFECT_CLICK)：预定义
-                // 效果在 MIUI 上静默无效（真机实录 2026-09-27，验收反馈
-                // 「震动无效」）——MIUI 对 VibrationEffect 预定义语义的支持
-                // 参差，裸波形全 ROM 可用。丢掉新马达的 click 曲线精细度，
-                // 换确定性。#39-14 强度档：无幅度马达用时长近似
-                // （12/20/32ms），有幅度控制用振幅（80/160/255）。
+                // 短而轻的一击，接近现在手机输入法的触感。仍只在用户打开
+                // 「按键振动」时发生。预定义 EFFECT_CLICK 在部分国产 ROM
+                // 上没反应，所以用很短的 one-shot。弱/中/强 = 8/10/14ms，
+                // 有振幅时再把力度压低，避免一声重震。
                 val strength = readKeyHapticStrength(this@FeelimeService)
+                val ms = longArrayOf(8L, 10L, 14L)[strength]
                 if (vibrator.hasAmplitudeControl()) {
-                    val amplitude = intArrayOf(80, 160, 255)[strength]
-                    vibrator.vibrate(VibrationEffect.createWaveform(
-                        longArrayOf(0, 18), intArrayOf(0, amplitude), -1))
+                    val amplitude = intArrayOf(36, 72, 120)[strength]
+                    vibrator.vibrate(VibrationEffect.createOneShot(ms, amplitude))
                 } else {
-                    val ms = longArrayOf(12, 20, 32)[strength]
-                    vibrator.vibrate(VibrationEffect.createWaveform(longArrayOf(0, ms), -1))
+                    vibrator.vibrate(VibrationEffect.createOneShot(ms, VibrationEffect.DEFAULT_AMPLITUDE))
                 }
             }
         }
@@ -3421,6 +3425,11 @@ class FeelimeService : InputMethodService(), AsrEngine.Listener, InkEngineListen
                 "preeditBold" -> {
                     val on = boolArg() ?: return@guarded
                     keyboardPrefs.edit().putBoolean(PREF_PREEDIT_BOLD, on).commit()
+                    ACTION_KEYBOARD_PREFS_CHANGED
+                }
+                "preeditFrame" -> {
+                    val on = boolArg() ?: return@guarded
+                    keyboardPrefs.edit().putBoolean(PREF_PREEDIT_FRAME, on).commit()
                     ACTION_KEYBOARD_PREFS_CHANGED
                 }
                 "keyOpacity" -> {
@@ -4379,6 +4388,66 @@ class FeelimeService : InputMethodService(), AsrEngine.Listener, InkEngineListen
         }
 
         @JavascriptInterface
+        fun addClipboardGroup(name: String, token: String) = guarded(token, limited = true) {
+            if (!clipboardStore.addGroup(name)) {
+                rejectedCalls += 1
+                return@guarded
+            }
+            main.post { pushClipboard() }
+        }
+
+        @JavascriptInterface
+        fun setClipboardGroup(id: String, group: String, token: String) = guarded(token, limited = true) {
+            if (!isPanelId(id) || group.length > 16) {
+                rejectedCalls += 1
+                return@guarded
+            }
+            clipboardStore.setItemGroup(id, group)
+            main.post { pushClipboard() }
+        }
+
+        /** 长按候选收入自造词。只接受 1–8 个汉字，自动注音，已有则不重复。 */
+        @JavascriptInterface
+        fun learnUserWord(text: String, token: String) = guarded(token, limited = false) {
+            val word = text.trim()
+            if (word.isEmpty() || word.length > 8 || word.any { it !in '\u4E00'..'\u9FFF' }) {
+                rejectedCalls += 1
+                return@guarded
+            }
+            onMain {
+                val store = com.feelime.ime.engine.CustomPhraseStore
+                val state = store.load(this@FeelimeService)
+                val note = when {
+                    state.user.any { it.first == word } -> "已在自造词里"
+                    state.user.size >= 200 -> "自造词已满 200 条"
+                    else -> {
+                        val auto = store.autoPinyinCodes(this@FeelimeService, word)
+                        if (auto.isEmpty()) "这个词没法自动注音，请到设置里手动加"
+                        else {
+                            store.save(
+                                this@FeelimeService,
+                                state.enabled,
+                                state.items,
+                                state.imported,
+                                state.user + (word to auto[0]),
+                                englishEnabled = state.englishEnabled,
+                                symbolRanks = state.symbolRanks,
+                                symbolFreqSort = state.symbolFreqSort,
+                            )
+                            sendBroadcast(
+                                android.content.Intent(ACTION_CUSTOM_PHRASES_CHANGED)
+                                    .setPackage(packageName),
+                            )
+                            "已收入自造词「$word」"
+                        }
+                    }
+                }
+                val payload = JSONObject().put("text", note)
+                evaluate("window.Feelime && window.Feelime.onLearnNote && window.Feelime.onLearnNote($payload)")
+            }
+        }
+
+        @JavascriptInterface
         fun getFavorites(token: String) = guarded(token, limited = false) {
             onMain { pushFavorites() }
         }
@@ -4539,12 +4608,23 @@ class FeelimeService : InputMethodService(), AsrEngine.Listener, InkEngineListen
             val metrics = getSystemService(android.view.WindowManager::class.java).currentWindowMetrics
             // Gesture-start regions can be larger than the visible system
             // bar. Reserve drawing/tap occlusion, not that entire region.
+            // 系统底部条：导航条、可点元素、强制手势区、字幕条（部分机型把
+            // 输入法切换钮算在 captionBar 底）。不收 systemGestures——那是
+            // 左右返回的大热区，收进来会在「系统条关闭」时仍把键盘垫高。
+            // IME 窗口自己的 decor insets 往往比应用 WindowMetrics 更准
+            // （切换条只出现在输入法窗口上），两边取较大值。
             val types = android.view.WindowInsets.Type.navigationBars() or
-                android.view.WindowInsets.Type.tappableElement()
-            // oplus gesture nav: the collapse/switch handles sit higher than
-            // the reported nav reserve (ace: reserve 16px, handles ~24dp).
+                android.view.WindowInsets.Type.tappableElement() or
+                android.view.WindowInsets.Type.mandatorySystemGestures() or
+                android.view.WindowInsets.Type.captionBar()
             val floor = oplusInsetFloor()
-            val reserved = maxOf(metrics.windowInsets.getInsets(types).bottom, floor)
+            val decorBottom = window?.window?.decorView?.rootWindowInsets
+                ?.getInsets(types)?.bottom ?: 0
+            val reserved = maxOf(
+                metrics.windowInsets.getInsets(types).bottom,
+                decorBottom,
+                floor,
+            )
             if (reserved == 0) return 0
             // #39 横屏底部【恢复】safe area（用户 2026-10-07 复核拍板）：
             // 导航条可见性跟随宿主 app，第三方 app 里 IME 的 hide 藏不掉
@@ -5019,7 +5099,7 @@ class FeelimeService : InputMethodService(), AsrEngine.Listener, InkEngineListen
         val CAPABILITIES get() = BridgeContract.CAPABILITIES
         const val MAX_JSON_CHARS = 4096
         const val MAX_CANDIDATE_ID_CHARS = 96
-        const val MAX_COMMIT_CODE_POINTS = 2000
+        const val MAX_COMMIT_CODE_POINTS = 100_000
         const val MAX_CURSOR_DELTA = 256
         const val MAX_CURSOR_CONTEXT_CHARS = 2048
         const val MAX_PENDING_CURSOR_DELTA = 16_384L

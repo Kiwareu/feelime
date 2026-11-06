@@ -343,6 +343,7 @@
             <!-- #67 定稿：颜文字不走 tab 界面——面板头换成横向滑动的
                  分类条（右侧固定 × 收起），列表区整幅给网格。 -->
             <div id="kaomojiTabs" class="kaomoji-tabs" hidden></div>
+            <span id="clipTotal" class="clip-total" hidden>0 条</span>
             <button id="panelClear" class="panel-action" aria-label="清空剪贴板" data-i18n-aria-label="清空剪贴板" data-i18n="清空">清空</button>
             <button id="panelManage" class="panel-action" aria-label="添加常用语" data-i18n-aria-label="添加常用语" hidden data-i18n="＋添加">＋添加</button>
             <!-- #39-4 定稿：面板头右侧唯一的关闭钮，× 图标回主键盘
@@ -396,6 +397,7 @@
             <div id="partialText" aria-live="polite"></div>
             <div id="levelBar"><i></i></div>
             <div id="voiceHint" data-i18n="点击任意位置结束">点击任意位置结束</div>
+            <div id="voiceGuide" data-i18n="请说较标准的普通话。标点由本机模型自动补上，声音不会上传">请说较标准的普通话。标点由本机模型自动补上，声音不会上传</div>
             <!-- mic 浮层动作行：说完了居中大按钮（主要出口）。 -->
             <div id="voiceActions">
                 <button id="voiceDone" type="button" aria-label="说完了，结束并上屏" data-i18n-aria-label="说完了，结束并上屏">
@@ -429,6 +431,9 @@
          shown only from quick settings. -->
     <div id="flickBlob"></div>
     <div id="toast" role="status"></div>
+    <!-- 液态玻璃底放在文档末尾：负 z-index 仍垫在键下，但不插到
+         #keyPopup 之前，避免改变既有兄弟序号（弹层几何测试依赖它）。 -->
+    <div id="glassField" aria-hidden="true"></div>
 </main>
 <script src="keyboard.js?v=__KB_VERSION__"></script>
 </body>

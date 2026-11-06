@@ -79,6 +79,16 @@ const LANG_KB = {
 
 // #31 键盘色调：与 native THEME_PRESETS / keyboard.css html[data-preset] 同源。
 const THEME_PRESET_LIST = ['classic', 'ocean', 'violet', 'amber', 'sakura', 'teal'];
+const GLASS_SKIN_LIST = [
+    { id: 'liuli', color: '#23c890' },
+    { id: 'ocean', color: '#4da3ff' },
+    { id: 'violet', color: '#a78bfa' },
+    { id: 'amber', color: '#ff9f45' },
+    { id: 'sakura', color: '#ff8fb1' },
+    { id: 'aurora', color: '#2ec8c8' },
+    { id: 'ink', color: '#8aa0b8' },
+    { id: 'frost', color: '#d7e6f2' },
+];
 const THEME_PRESET_COLORS = {
     classic: '#23c890', ocean: '#4da3ff', violet: '#a78bfa',
     amber: '#ff9f45', sakura: '#ff8fb1', teal: '#2ec8c8',
@@ -107,13 +117,27 @@ const I18N = {
         "language.zh": "中文",
         "language.en": "English",
         "nav.groups": "设置分组",
+        "nav.group.daily": "日常",
+        "nav.group.more": "更多",
         "nav.back": "返回首页",
+        "entry.layout.title": "键盘布局",
+        "entry.layout.subtitle": "全拼 · 双拼 · 九键 · 笔画",
+        "entry.fuzzy.title": "模糊音",
+        "entry.fuzzy.subtitle": "平翘舌 · 前后鼻音 · n/l",
+        "entry.candidates.title": "候选与联想",
+        "entry.candidates.subtitle": "联想 · 中英混输 · 英文词位置",
+        "entry.clip.title": "剪贴板与常用语",
+        "entry.clip.subtitle": "只存在本机 · 常用语与符号词",
+        "entry.feedback.title": "按键音效与振动",
+        "entry.feedback.subtitle": "声音 · 振动 · 气泡",
+        "entry.privacy.title": "隐私与离线",
+        "entry.privacy.subtitle": "按键、语音、壁纸都不上传",
         "entry.input.title": "键盘与输入",
-        "entry.input.subtitle": "双拼 · 定制按键",
+        "entry.input.subtitle": "手感 · 双拼方案 · 定制按键",
         "entry.dict.title": "词库",
-        "entry.dict.subtitle": "导入 rime 词库 · 叠加候选",
-        "entry.voice.title": "语音识别",
-        "entry.voice.subtitle": "语音模型 · 识别设置",
+        "entry.dict.subtitle": "导入词库 · 自造词 · 常用语",
+        "entry.voice.title": "语音输入",
+        "entry.voice.subtitle": "离线识别 · 普通话说明 · 标点",
         "entry.update.title": "键盘热更新",
         "entry.update.subtitle": "键盘前端文件更新",
         "entry.backup.title": "备份与恢复",
@@ -130,7 +154,7 @@ const I18N = {
         "dict.import.note": "词<TAB>码<TAB>位置 逐行导入，上限 5000 条。第三列只对纯符号词生效（1-9 指定候选位次，不填默认第 3 位）；注意 rime 词库的第三列原本是权重——会被当作位置解释，超过 9 按 9 处理，建议导入前删掉或改写该列。",
         "dict.userwords.title": "自造词",
         "dict.userwords.enable": "手动维护的常用词",
-        "dict.userwords.hint": "逐条添加「词 + 全拼输入码」，输入码命中即出这个词；适合名字、缩写、行话。改动即时生效，重启保留。",
+        "dict.userwords.hint": "逐条添加「词 + 全拼输入码」，或长按候选点「收入自造词」。也可以导入 rime 词库。适合名字和行话。只存在本机，最多 200 条。",
         "dict.userwords.manage": "管理词条",
         "page.userwords": "自造词",
         "page.fuzzy": "全拼模糊音",
@@ -203,7 +227,7 @@ const I18N = {
         "input.assoc.title": "中文联想",
         "input.assoc.badge": "输入",
         "input.assoc.enable": "选词后联想下一个词",
-        "input.assoc.hint": "上屏后在候选条给出高频接续词，点击可连续联想；只在全拼/双拼生效。",
+        "input.assoc.hint": "上屏后给出接续词，点一下接着联想。你自己刚打过的接续会排到前面（只记在本机）。全拼、双拼、九键、笔画都可用。",
         "input.assoc.backspaceClear": "联想时退格清除联想",
         "input.hwkb.title": "物理键盘",
         "input.hwkb.badge": "输入",
@@ -782,17 +806,45 @@ const I18N = {
         "input.feel.kbHeight": "键盘高度",
         "input.feel.kbHeightHint": "竖屏键盘的高度；键盘上拖拽调节与此处等效。",
         "input.feel.kbHeightReset": "恢复默认",
-        "input.feel.keyOpacityHint": "键帽在背景图上的透明程度，文字始终实色。",
+        "input.feel.keyOpacityHint": "键帽有多透。默认略透，像玻璃；拉到最右是实心。文字始终实色。",
+        "input.feel.systemBarNote": "地球仪和收起键盘那一行由手机系统设置显示或隐藏，Feelime 不另画一条，也没有开关去关它。系统画出这一条时，键盘会按系统报来的底部空白把按键抬上去，避免挡住系统按钮。",
+        "input.feel.glassTitle": "液态玻璃",
+        "input.feel.glassBadge": "皮肤",
+        "input.feel.glassSkin": "内置皮肤",
+        "input.feel.glassSkinHint": "一套皮肤会同时设定色调、透明度、磨砂和圆角。之后仍可以单独微调，微调后不再算某一套皮肤。",
+        "input.feel.glassBlur": "磨砂强度",
+        "input.feel.glassBlurHint": "背景和壁纸的高斯模糊。0 是清晰，数字越大越像雾面玻璃。",
+        "input.feel.glassRadius": "圆角",
+        "input.feel.glassRadiusHint": "键帽和浮层的圆角。越大越圆。",
+        "input.feel.panelOpacity": "面板透明度",
+        "input.feel.panelOpacityHint": "候选条、菜单和语音卡片有多透。文字保持实色，方便看清。",
+        "input.feel.preeditFrame": "拼音外框",
+        "input.feel.preeditFrameHint": "给正在输入的拼音再套一个随字数收缩的框。默认关，拼音直接写在对应汉字上方。",
+        "skin.liuli": "琉璃青",
+        "skin.ocean": "深海",
+        "skin.violet": "暮紫",
+        "skin.amber": "琥珀",
+        "skin.sakura": "樱雾",
+        "skin.aurora": "极光",
+        "skin.ink": "墨玉",
+        "skin.frost": "霜白",
+        "clip.title": "剪贴板与常用语",
+        "clip.badge": "本机",
+        "clip.note": "键盘工具栏里的剪贴板只保存在这台手机上，不上传，也不进云备份。条数不另设上限，全部正文大约 32MB。复制一段文字后，点键盘上的剪贴板图标就能贴回去。常用语和符号词在下面管理。",
+        "voice.asr.honest": "当前离线模型对较标准的普通话效果最好：语速放稳、环境安静，说完一句再点「说完了」。标点由本机标点模型自动补上（不是喊「逗号」），句尾句号可以在下面关掉。这里不会把声音传到网上，也不能靠换设置凭空提高识别率。",
+        "privacy.title": "隐私与离线",
+        "privacy.badge": "本机",
+        "privacy.note": "按键、候选、语音和壁纸都只留在这台手机上。Feelime 不上传输入内容，也不带统计上报。语音模型是随安装包或你手动下载的离线模型。诊断开关只在你打开之后记录引擎事件，不含你打过的字。",
         "input.feel.keyBubble": "按键气泡",
-        "input.feel.keyBubbleHint": "按下按键时在键帽上方放大显示所按的字符，方便确认有没有按错（默认关闭）。",
-        "entry.appearance.title": "外观",
-        "entry.appearance.subtitle": "色彩模式 · 背景图片 · 透明度",
+        "input.feel.keyBubbleHint": "按下按键时在键帽正上方放大显示所按的字符，松手后停留一会儿再消失（默认开启）。",
+        "entry.appearance.title": "外观与皮肤",
+        "entry.appearance.subtitle": "液态玻璃 · 配色 · 壁纸",
         "input.appearance.title": "外观",
         "input.appearance.preview": "预览",
         "input.appearance.previewHint": "键盘不再自动弹出（想实时看配色去「皮肤」页）；点这个输入框可以唤起键盘试打。",
         "input.appearance.previewPlaceholder": "直接在这里打字试试",
         "input.appearance.badge": "主题",
-        "input.feel.bgImageHint": "铺满整个键盘区域（工具条到底部留白），压缩到 720px 宽存储，只在本机生效。",
+        "input.feel.bgImageHint": "自定义壁纸铺满整个键盘区域（工具条到底部留白），压缩到 720px 宽后只存在本机，不会上传。",
         "input.feel.bgImageHintDark": "亮暗切换时各自使用对应组的图片。",
         "自定义": "Custom",
         "光标控制": "光标控制",
@@ -916,16 +968,30 @@ const I18N = {
         "language.zh": "中文",
         "language.en": "English",
         "nav.groups": "Settings sections",
+        "nav.group.daily": "Everyday",
+        "nav.group.more": "More",
         "nav.back": "Back to home",
         "nav.backAppearance": "Back to appearance",
+        "entry.layout.title": "Keyboard layout",
+        "entry.layout.subtitle": "Pinyin · Double pinyin · Nine-key · Strokes",
+        "entry.fuzzy.title": "Fuzzy pinyin",
+        "entry.fuzzy.subtitle": "zh/z · in/ing · n/l",
+        "entry.candidates.title": "Candidates",
+        "entry.candidates.subtitle": "Associations · Mixed English · Word position",
+        "entry.clip.title": "Clipboard & phrases",
+        "entry.clip.subtitle": "On this phone only · Phrases and symbols",
+        "entry.feedback.title": "Sound & haptics",
+        "entry.feedback.subtitle": "Clicks · Vibration · Key bubbles",
+        "entry.privacy.title": "Privacy & offline",
+        "entry.privacy.subtitle": "Keystrokes, voice, and wallpapers stay here",
         "entry.input.title": "Keyboard & input",
-        "entry.input.subtitle": "Double pinyin · Custom keys",
+        "entry.input.subtitle": "Feel · Double pinyin · Custom keys",
         "entry.dict.title": "Lexicon",
-        "entry.dict.subtitle": "Import rime dicts · Extra candidates",
+        "entry.dict.subtitle": "Import · User words · Phrases",
         "entry.backup.title": "Backup & restore",
         "entry.backup.subtitle": "Settings · Phrases · Lexicons",
-        "entry.voice.title": "Voice recognition",
-        "entry.voice.subtitle": "Voice models · Recognition options",
+        "entry.voice.title": "Voice input",
+        "entry.voice.subtitle": "Offline recognition · Mandarin note · Punctuation",
         "entry.update.title": "Keyboard updates",
         "entry.update.subtitle": "Update keyboard HTML/CSS/JS",
         "entry.about.title": "About",
@@ -940,7 +1006,7 @@ const I18N = {
         "dict.import.note": "Lines of word<TAB>code are imported, up to 5000 entries; handy for cherry-picking words from community dicts such as rime-ice.",
         "dict.userwords.title": "User words",
         "dict.userwords.enable": "Hand-maintained words",
-        "dict.userwords.hint": "Add word + full-pinyin code pairs one by one; typing the code surfaces the word. Great for names, abbreviations, jargon. Applies immediately, survives restart.",
+        "dict.userwords.hint": "Add word + pinyin pairs, or long-press a candidate and choose Save to my words. Rime dictionaries can be imported on this page. On this phone only, up to 200 entries.",
         "dict.userwords.manage": "Manage words",
         "page.userwords": "User words",
         "page.fuzzy": "Fuzzy pinyin",
@@ -1013,7 +1079,7 @@ const I18N = {
         "input.assoc.title": "Chinese word association",
         "input.assoc.badge": "Input",
         "input.assoc.enable": "Suggest the next word after a commit",
-        "input.assoc.hint": "Shows frequent followers in the candidates bar after a word commits; tap to keep the chain going. Full/Double Pinyin only.",
+        "input.assoc.hint": "After a word commits, likely next words appear. Ones you recently typed yourself move to the front, and stay on this phone. Works for full pinyin, double pinyin, nine-key, and strokes.",
         "input.assoc.backspaceClear": "Backspace dismisses associations",
         "input.hwkb.title": "Physical keyboard",
         "input.hwkb.badge": "Input",
@@ -1582,11 +1648,39 @@ const I18N = {
         "input.feel.kbHeight": "Keyboard height",
         "input.feel.kbHeightHint": "Portrait keyboard height; dragging on the keyboard stays equivalent.",
         "input.feel.kbHeightReset": "Reset",
-        "input.feel.keyOpacityHint": "How transparent the keycaps sit over the background image; labels stay solid.",
+        "input.feel.keyOpacityHint": "How see-through the keycaps are. The default is lightly translucent glass; the right end is solid. Labels stay opaque.",
+        "input.feel.systemBarNote": "The globe and hide-keyboard row is shown or hidden by the phone’s system settings. Feelime does not draw a second row and has no switch for it. When the system shows that row, the keys move up by the inset the system reports so they do not cover its buttons.",
+        "input.feel.glassTitle": "Liquid glass",
+        "input.feel.glassBadge": "Skin",
+        "input.feel.glassSkin": "Built-in skins",
+        "input.feel.glassSkinHint": "A skin sets tint, opacity, blur, and corners together. You can still tweak afterwards; tweaking leaves the skin.",
+        "input.feel.glassBlur": "Frost",
+        "input.feel.glassBlurHint": "Gaussian blur on the background and wallpaper. 0 is sharp; higher looks more like frosted glass.",
+        "input.feel.glassRadius": "Corners",
+        "input.feel.glassRadiusHint": "Corner radius of keys and popups. Higher is rounder.",
+        "input.feel.panelOpacity": "Panel opacity",
+        "input.feel.panelOpacityHint": "How solid the candidate bar, menus, and voice card are. Text stays opaque.",
+        "input.feel.preeditFrame": "Pinyin outline",
+        "input.feel.preeditFrameHint": "Draw an extra box that shrinks around the composing pinyin. Off by default; pinyin sits above each character.",
+        "skin.liuli": "Liuli",
+        "skin.ocean": "Deep sea",
+        "skin.violet": "Dusk",
+        "skin.amber": "Amber",
+        "skin.sakura": "Sakura mist",
+        "skin.aurora": "Aurora",
+        "skin.ink": "Ink jade",
+        "skin.frost": "Frost",
+        "clip.title": "Clipboard & phrases",
+        "clip.badge": "On device",
+        "clip.note": "The keyboard clipboard stays on this phone. It is not uploaded and is not part of cloud backup. There is no fixed item cap; about 32MB of text total is the on-device ceiling. After you copy text, tap the clipboard icon on the keyboard to paste it back. Phrases and symbol words are managed below.",
+        "voice.asr.honest": "The current offline model works best with fairly standard Mandarin: steady pace, a quiet room, then tap Done. Punctuation is added by the on-device model (saying the word “comma” does not insert one). Trailing periods can be stripped below. Audio is never uploaded, and no setting here can invent higher accuracy.",
+        "privacy.title": "Privacy and offline",
+        "privacy.badge": "On device",
+        "privacy.note": "Keystrokes, candidates, voice, and wallpapers stay on this phone. Feelime does not upload what you type and does not include analytics. Voice models ship with the app or are downloaded by you. Diagnostics, if you turn them on, record engine events and not the text you typed.",
         "input.feel.keyBubble": "Key bubble",
-        "input.feel.keyBubbleHint": "Enlarge the pressed character above the keycap while held, so mis-presses are obvious (off by default).",
-        "entry.appearance.title": "Appearance",
-        "entry.appearance.subtitle": "Color mode · Background · Opacity",
+        "input.feel.keyBubbleHint": "Enlarge the pressed character right above the keycap and linger briefly after release (on by default).",
+        "entry.appearance.title": "Look & skins",
+        "entry.appearance.subtitle": "Liquid glass · Colors · Wallpaper",
         "entry.skin.title": "Skin",
         "entry.skin.subtitle": "Tint · Saturation · Background",
         "page.skin": "Skin",
@@ -1595,7 +1689,7 @@ const I18N = {
         "input.appearance.previewHint": "The keyboard no longer pops up automatically here (use the Skin page for live colors); tap this box to summon it and try typing.",
         "input.appearance.previewPlaceholder": "Type here to try it",
         "input.appearance.badge": "Theme",
-        "input.feel.bgImageHint": "Covers the whole keyboard (toolbar to bottom padding), compressed to 720px wide and stored locally.",
+        "input.feel.bgImageHint": "A custom wallpaper covers the whole keyboard (toolbar to bottom padding). It is compressed to 720px and stored only on this phone.",
         "input.feel.bgImageHintDark": "Each theme uses its own image when you switch.",
         "自定义": "Custom",
         "光标控制": "Cursor",
@@ -2604,7 +2698,7 @@ function renderFeel(state) {
     // 预览素材先行初始化（不透明度 + 亮/暗背景图），再刷预览。
     const opacity = $("keyOpacity");
     if (opacity) {
-        const opPct = Math.max(5, Math.min(100, Number(state.keyOpacity ?? 100)));
+        const opPct = Math.max(5, Math.min(100, Number(state.keyOpacity ?? 74)));
         pvKeyAlpha = opPct / 100;
         opacity.value = String(opPct);
     }
@@ -2614,6 +2708,34 @@ function renderFeel(state) {
     pvBgLightImg = pvBg("bgImageLight", "bgImageLightSource");
     pvBgDarkImg = pvBg("bgImageDark", "bgImageDarkSource");
     updateThemePreview();
+    const glassGrid = $("glassSkinGrid");
+    if (glassGrid) {
+        const active = typeof state.glassSkin === "string" ? state.glassSkin : "";
+        glassGrid.textContent = "";
+        GLASS_SKIN_LIST.forEach(skin => {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "skin-card" + (skin.id === active ? " active" : "");
+            btn.dataset.skin = skin.id;
+            btn.setAttribute("aria-pressed", skin.id === active ? "true" : "false");
+            const dot = document.createElement("span");
+            dot.className = "skin-dot";
+            dot.style.setProperty("--sw", skin.color);
+            const label = document.createElement("span");
+            label.textContent = t("skin." + skin.id);
+            btn.append(dot, label);
+            btn.addEventListener("click", () => call("setGlassSkin", skin.id));
+            glassGrid.append(btn);
+        });
+    }
+    [["glassBlur", "glassBlur", 26, 0, 32], ["glassRadius", "glassRadius", 22, 8, 28],
+        ["panelOpacity", "panelOpacity", 42, 35, 100]].forEach(([id, key, fallback, min, max]) => {
+        const slider = $(id);
+        if (!slider || document.activeElement === slider) return;
+        const raw = Number(state[key]);
+        const value = Number.isFinite(raw) ? Math.max(min, Math.min(max, Math.round(raw))) : fallback;
+        slider.value = String(value);
+    });
     const bubble = $("keyBubble");
     if (bubble) bubble.checked = state.keyBubble === true;
     const lingerSel = $("bubbleLinger");
@@ -2677,6 +2799,7 @@ function renderFeel(state) {
     }
     setToggle("keyHaptic", state.keyHaptic);
     setToggle("preeditBold", state.preeditBold);
+    setToggle("preeditFrame", state.preeditFrame);
 }
 
 /** 双拼方案 + 键位图（dp-data.js 的 window.FeelimeDp 提供各方案键位）。 */
@@ -4132,6 +4255,7 @@ $("btnClearFont").addEventListener("click", () => {
 });
 $("preeditFont").addEventListener("change", event => call("setPreeditFont", parseInt(event.target.value, 10)));
 $("preeditBold").addEventListener("change", event => call("setPreeditBold", event.target.checked));
+$("preeditFrame").addEventListener("change", event => call("setPreeditFrame", event.target.checked));
 $("oneHand").addEventListener("change", event => call("setOneHandMode", parseInt(event.target.value, 10)));
 $("oneHandPad").addEventListener("change", event => call("setOneHandPad", parseInt(event.target.value, 10)));
 $("sideContent").addEventListener("change", event => call("setSideContent", parseInt(event.target.value, 10)));
@@ -4149,6 +4273,18 @@ $("keyOpacity").addEventListener("change", event => {
     keyOpacityDirty = false;
     call("setKeyOpacity", parseInt(event.target.value, 10));
 });
+[["glassBlur", "setGlassBlur"], ["glassRadius", "setGlassRadius"], ["panelOpacity", "setPanelOpacity"]]
+    .forEach(([id, method]) => {
+        const slider = $(id);
+        if (!slider) return;
+        let dirty = false;
+        slider.addEventListener("input", () => { dirty = true; });
+        slider.addEventListener("change", event => {
+            if (!dirty) return;
+            dirty = false;
+            call(method, parseInt(event.target.value, 10));
+        });
+    });
 // 按键气泡（issue #30-1）：外观页开关，默认关；广播→hello 实时作用到
 // 底下弹出的预览键盘。
 $("keyBubble").addEventListener("change", event => call("setKeyBubble", event.target.checked));
@@ -6348,7 +6484,15 @@ $("btnCopyAbout").addEventListener("click", () => {
 });
 
 document.querySelectorAll("[data-target]").forEach(entry => {
-    entry.addEventListener("click", () => showPage(entry.dataset.target));
+    entry.addEventListener("click", () => {
+        showPage(entry.dataset.target);
+        const anchor = entry.dataset.anchor;
+        if (!anchor) return;
+        const node = document.getElementById(anchor);
+        if (node && typeof node.scrollIntoView === "function") {
+            requestAnimationFrame(() => node.scrollIntoView({ block: "start" }));
+        }
+    });
 });
 // #51 hashtag 直达：启动消费当前锚 + 外部改写监听。
 window.addEventListener("hashchange", applyLocationHash);

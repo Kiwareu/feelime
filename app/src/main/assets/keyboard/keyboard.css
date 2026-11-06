@@ -32,23 +32,35 @@
     --key-sat: var(--kb-sat, 1);
     /* 键帽不透明度滑块（外观页）：hsla 的 alpha 位由 JS 只调
      * --key-alpha（0-1），键帽文字保持实色。 */
-    --key-alpha: 1;
+    /* 液态玻璃：键帽默认略透（文字仍实色）。用户「按键不透明度」
+     * 仍写这个变量，100 = 完全实心。 */
+    --key-alpha: 0.86;
+    /* 面板通透度仍由设置控制。底板另有一层更厚的霜，避免页面文字穿透。 */
+    --panel-alpha: 0.72;
+    --glass-blur: 28px;
+    --sheet-top: hsl(var(--bg-hue) calc(36% * var(--bg-sat, 1)) 22% / .90);
+    --sheet-bottom: hsl(var(--bg-hue) calc(30% * var(--bg-sat, 1)) 12% / .94);
+    --bar-l: 18%;
+    --glass-sheen: rgba(255, 255, 255, .55);
+    --glass-edge: rgba(255, 255, 255, .28);
+    --glass-veil: hsl(var(--bg-hue) calc(28% * var(--bg-sat, 1)) 16% / .72);
+    --glass-veil-2: hsl(var(--bg-hue) calc(24% * var(--bg-sat, 1)) 10% / .82);
     --bg: hsl(var(--bg-hue) calc(22% * var(--bg-sat, 1)) calc(12% + (100% - 12%) * 0.35 * var(--bg-lt, 0)));
-    --key: hsl(var(--key-hue) calc(16% * var(--key-sat, 1)) calc(37% + (100% - 37%) * 0.75 * var(--key-lt, 0)) / var(--key-alpha));
-    --special: hsl(var(--key-hue) calc(22% * var(--key-sat, 1)) calc(25% + (100% - 25%) * 0.75 * var(--key-lt, 0)) / var(--key-alpha));
-    --pressed: hsl(var(--key-hue) calc(16% * var(--key-sat, 1)) calc(43% + (100% - 43%) * 0.75 * var(--key-lt, 0)) / var(--key-alpha));
+    --key: hsl(var(--key-hue) calc(22% * var(--key-sat, 1)) calc(34% + (100% - 34%) * 0.75 * var(--key-lt, 0)) / var(--key-alpha));
+    --special: hsl(var(--key-hue) calc(18% * var(--key-sat, 1)) calc(24% + (100% - 24%) * 0.75 * var(--key-lt, 0)) / var(--key-alpha));
+    --pressed: hsl(var(--key-hue) calc(22% * var(--key-sat, 1)) calc(42% + (100% - 42%) * 0.75 * var(--key-lt, 0)) / var(--key-alpha));
     --text: #e8e8e8;
     --muted: #b0b0b0;
     --accent: hsl(var(--key-hue) calc(62% * var(--key-sat, 1)) calc(48% + (100% - 48%) * 0.75 * var(--key-lt, 0)));
     --accent-strong: hsl(var(--key-hue) calc(62% * var(--key-sat, 1)) calc(30% + (100% - 30%) * 0.75 * var(--key-lt, 0)));
     --danger: #ff6b6b;
     --recording: #ff4d4d;
-    --panel: hsl(var(--bg-hue) calc(22% * var(--bg-sat, 1)) calc(16% + (100% - 16%) * 0.35 * var(--bg-lt, 0)));
-    --panel-a: hsl(var(--bg-hue) calc(22% * var(--bg-sat, 1)) calc(16% + (100% - 16%) * 0.35 * var(--bg-lt, 0)) / var(--key-alpha));
+    --panel: hsl(var(--bg-hue) calc(22% * var(--bg-sat, 1)) calc(16% + (100% - 16%) * 0.35 * var(--bg-lt, 0)) / var(--panel-alpha));
+    --panel-a: hsl(var(--bg-hue) calc(22% * var(--bg-sat, 1)) calc(16% + (100% - 16%) * 0.35 * var(--bg-lt, 0)) / var(--panel-alpha));
     --pill: hsl(var(--bg-hue) calc(20% * var(--bg-sat, 1)) calc(24% + (100% - 24%) * 0.35 * var(--bg-lt, 0)));
     --logo-bg: hsl(var(--bg-hue) calc(8% * var(--bg-sat, 1)) calc(30% + (100% - 30%) * 0.35 * var(--bg-lt, 0)));
     --icon: hsl(var(--bg-hue) calc(5% * var(--bg-sat, 1)) calc(60% + (100% - 60%) * 0.35 * var(--bg-lt, 0)));
-    --card-bg: hsl(var(--bg-hue) calc(9% * var(--bg-sat, 1)) calc(21% + (100% - 21%) * 0.35 * var(--bg-lt, 0)));
+    --card-bg: hsl(var(--bg-hue) calc(9% * var(--bg-sat, 1)) calc(21% + (100% - 21%) * 0.35 * var(--bg-lt, 0)) / var(--panel-alpha));
     --card-text: #e8e8e8;
     --card-sub: #a2a2ac;
     --input-placeholder: #dedede;
@@ -56,16 +68,17 @@
     --accent-text: hsl(var(--key-hue) calc(60% * var(--key-sat, 1)) calc(66% + (100% - 66%) * 0.75 * var(--key-lt, 0)));
     --accent-ink: hsl(var(--key-hue) calc(45% * var(--key-sat, 1)) calc(95% + (100% - 95%) * 0.75 * var(--key-lt, 0)));
     --line: hsl(var(--bg-hue) calc(18% * var(--bg-sat, 1)) calc(28% + (100% - 28%) * 0.35 * var(--bg-lt, 0)));
-    --radius-key: 5px;
-    --radius-card: 10px;
+    --radius-key: 22px;
+    --radius-card: 28px;
+    --radius-sheet: 32px;
     --scrim: #000000b8;
 }
 
 html.theme-light {
     color-scheme: light;
-    --key: hsl(var(--key-hue) calc(38% * var(--key-sat, 1)) calc(97% + (100% - 97%) * 0.75 * var(--key-lt, 0)) / var(--key-alpha));
-    --special: hsl(var(--key-hue) calc(42% * var(--key-sat, 1)) calc(72% + (100% - 72%) * 0.75 * var(--key-lt, 0)) / var(--key-alpha));
-    --pressed: hsl(var(--key-hue) calc(38% * var(--key-sat, 1)) calc(92% + (100% - 92%) * 0.75 * var(--key-lt, 0)) / var(--key-alpha));
+    --key: hsl(var(--key-hue) calc(38% * var(--key-sat, 1)) calc(96% + (100% - 96%) * 0.75 * var(--key-lt, 0)) / var(--key-alpha));
+    --special: hsl(var(--key-hue) calc(32% * var(--key-sat, 1)) calc(90% + (100% - 90%) * 0.75 * var(--key-lt, 0)) / var(--key-alpha));
+    --pressed: hsl(var(--key-hue) calc(36% * var(--key-sat, 1)) calc(86% + (100% - 86%) * 0.75 * var(--key-lt, 0)) / var(--key-alpha));
     --bg: hsl(var(--bg-hue) calc(32% * var(--bg-sat, 1)) calc(88% + (100% - 88%) * 0.35 * var(--bg-lt, 0)));
     --text: #181818;
     /* The old #b0b0b0 sat at ~2.1:1 on the light surfaces -
@@ -78,12 +91,12 @@ html.theme-light {
     --accent-strong: hsl(var(--key-hue) calc(62% * var(--key-sat, 1)) calc(30% + (100% - 30%) * 0.75 * var(--key-lt, 0)));
     --danger: #d93025;
     --recording: #e5484d;
-    --panel: hsl(var(--bg-hue) calc(34% * var(--bg-sat, 1)) calc(95% + (100% - 95%) * 0.35 * var(--bg-lt, 0)));
-    --panel-a: hsl(var(--bg-hue) calc(34% * var(--bg-sat, 1)) calc(95% + (100% - 95%) * 0.35 * var(--bg-lt, 0)) / var(--key-alpha));
+    --panel: hsl(var(--bg-hue) calc(34% * var(--bg-sat, 1)) calc(95% + (100% - 95%) * 0.35 * var(--bg-lt, 0)) / var(--panel-alpha));
+    --panel-a: hsl(var(--bg-hue) calc(34% * var(--bg-sat, 1)) calc(95% + (100% - 95%) * 0.35 * var(--bg-lt, 0)) / var(--panel-alpha));
     --pill: hsl(var(--bg-hue) calc(45% * var(--bg-sat, 1)) calc(99% + (100% - 99%) * 0.35 * var(--bg-lt, 0)));
     --logo-bg: hsl(var(--bg-hue) calc(20% * var(--bg-sat, 1)) calc(99% + (100% - 99%) * 0.35 * var(--bg-lt, 0)));
     --icon: hsl(var(--bg-hue) calc(5% * var(--bg-sat, 1)) calc(47% + (100% - 47%) * 0.35 * var(--bg-lt, 0)));
-    --card-bg: hsl(var(--bg-hue) calc(18% * var(--bg-sat, 1)) calc(97% + (100% - 97%) * 0.35 * var(--bg-lt, 0)));
+    --card-bg: hsl(var(--bg-hue) calc(18% * var(--bg-sat, 1)) calc(97% + (100% - 97%) * 0.35 * var(--bg-lt, 0)) / var(--panel-alpha));
     --card-text: #1c1c24;
     --card-sub: #6a6a78;
     --input-placeholder: #5c616b;
@@ -93,6 +106,13 @@ html.theme-light {
     --line: hsl(var(--bg-hue) calc(26% * var(--bg-sat, 1)) calc(82% + (100% - 82%) * 0.35 * var(--bg-lt, 0)));
     --scrim: #ffffffb0;
     --mod-active-bg: hsl(var(--key-hue) calc(55% * var(--key-sat, 1)) calc(89% + (100% - 89%) * 0.75 * var(--key-lt, 0)));
+    --bar-l: 96%;
+    --sheet-top: hsl(var(--bg-hue) calc(48% * var(--bg-sat, 1)) 97% / .90);
+    --sheet-bottom: hsl(var(--bg-hue) calc(42% * var(--bg-sat, 1)) 90% / .84);
+    --glass-sheen: rgba(255, 255, 255, .92);
+    --glass-edge: rgba(255, 255, 255, .55);
+    --glass-veil: hsl(var(--bg-hue) calc(40% * var(--bg-sat, 1)) 96% / .78);
+    --glass-veil-2: hsl(var(--bg-hue) calc(36% * var(--bg-sat, 1)) 90% / .86);
 }
 
 /* ===== #31 预置色调：六预置=六个固定 --kb-hue（classic=默认绿 160），
@@ -115,9 +135,9 @@ html.theme-dark {
 @media (prefers-color-scheme: light) {
     html:not(.theme-light):not(.theme-dark) {
         color-scheme: light;
-        --key: hsl(var(--key-hue) calc(38% * var(--key-sat, 1)) calc(97% + (100% - 97%) * 0.75 * var(--key-lt, 0)) / var(--key-alpha));
-        --special: hsl(var(--key-hue) calc(42% * var(--key-sat, 1)) calc(72% + (100% - 72%) * 0.75 * var(--key-lt, 0)) / var(--key-alpha));
-        --pressed: hsl(var(--key-hue) calc(38% * var(--key-sat, 1)) calc(92% + (100% - 92%) * 0.75 * var(--key-lt, 0)) / var(--key-alpha));
+        --key: hsl(var(--key-hue) calc(38% * var(--key-sat, 1)) calc(96% + (100% - 96%) * 0.75 * var(--key-lt, 0)) / var(--key-alpha));
+        --special: hsl(var(--key-hue) calc(32% * var(--key-sat, 1)) calc(90% + (100% - 90%) * 0.75 * var(--key-lt, 0)) / var(--key-alpha));
+        --pressed: hsl(var(--key-hue) calc(36% * var(--key-sat, 1)) calc(86% + (100% - 86%) * 0.75 * var(--key-lt, 0)) / var(--key-alpha));
         --bg: hsl(var(--bg-hue) calc(32% * var(--bg-sat, 1)) calc(88% + (100% - 88%) * 0.35 * var(--bg-lt, 0)));
         --text: #181818;
         --muted: #5c616b; /* See html.theme-light */
@@ -125,12 +145,12 @@ html.theme-dark {
     --accent-strong: hsl(var(--key-hue) calc(62% * var(--key-sat, 1)) calc(30% + (100% - 30%) * 0.75 * var(--key-lt, 0)));
         --danger: #d93025;
         --recording: #e5484d;
-        --panel: hsl(var(--bg-hue) calc(34% * var(--bg-sat, 1)) calc(95% + (100% - 95%) * 0.35 * var(--bg-lt, 0)));
-        --panel-a: hsl(var(--bg-hue) calc(34% * var(--bg-sat, 1)) calc(95% + (100% - 95%) * 0.35 * var(--bg-lt, 0)) / var(--key-alpha));
+        --panel: hsl(var(--bg-hue) calc(34% * var(--bg-sat, 1)) calc(95% + (100% - 95%) * 0.35 * var(--bg-lt, 0)) / var(--panel-alpha));
+        --panel-a: hsl(var(--bg-hue) calc(34% * var(--bg-sat, 1)) calc(95% + (100% - 95%) * 0.35 * var(--bg-lt, 0)) / var(--panel-alpha));
         --pill: hsl(var(--bg-hue) calc(45% * var(--bg-sat, 1)) calc(99% + (100% - 99%) * 0.35 * var(--bg-lt, 0)));
         --logo-bg: hsl(var(--bg-hue) calc(20% * var(--bg-sat, 1)) calc(99% + (100% - 99%) * 0.35 * var(--bg-lt, 0)));
         --icon: hsl(var(--bg-hue) calc(5% * var(--bg-sat, 1)) calc(47% + (100% - 47%) * 0.35 * var(--bg-lt, 0)));
-        --card-bg: hsl(var(--bg-hue) calc(18% * var(--bg-sat, 1)) calc(97% + (100% - 97%) * 0.35 * var(--bg-lt, 0)));
+        --card-bg: hsl(var(--bg-hue) calc(18% * var(--bg-sat, 1)) calc(97% + (100% - 97%) * 0.35 * var(--bg-lt, 0)) / var(--panel-alpha));
         --card-text: #1c1c24;
         --card-sub: #6a6a78;
         --input-placeholder: #5c616b;
@@ -140,6 +160,13 @@ html.theme-dark {
         --line: hsl(var(--bg-hue) calc(26% * var(--bg-sat, 1)) calc(82% + (100% - 82%) * 0.35 * var(--bg-lt, 0)));
         --scrim: #ffffffb0;
         --mod-active-bg: hsl(var(--key-hue) calc(55% * var(--key-sat, 1)) calc(89% + (100% - 89%) * 0.75 * var(--key-lt, 0)));
+        --bar-l: 96%;
+        --sheet-top: hsl(var(--bg-hue) calc(48% * var(--bg-sat, 1)) 97% / .90);
+        --sheet-bottom: hsl(var(--bg-hue) calc(42% * var(--bg-sat, 1)) 90% / .84);
+        --glass-sheen: rgba(255, 255, 255, .92);
+        --glass-edge: rgba(255, 255, 255, .55);
+        --glass-veil: hsl(var(--bg-hue) calc(40% * var(--bg-sat, 1)) 96% / .78);
+        --glass-veil-2: hsl(var(--bg-hue) calc(36% * var(--bg-sat, 1)) 90% / .86);
     }
 }
 
@@ -198,8 +225,12 @@ button { font: inherit; }
      * metrics (18px base covers a CJK line box at 13px). layoutChrome()
      * mirrors the same growth so the row budget shrinks instead of
      * overflowing. */
-    padding: var(--preedit-band, 18px) 4px calc(5px + var(--safe-bottom, 0px) + var(--kb-bottom-pad, 0px));
-    background: var(--bg);
+    padding: var(--preedit-band, 18px) 10px calc(8px + var(--safe-bottom, 0px) + var(--kb-bottom-pad, 0px));
+    /* 底色交给 #glassField，避免 #softKeyboard 上的 backdrop-filter
+     * 把 position:fixed 浮层（按键气泡、长按弹层）的坐标系从视口改到
+     * 键盘底板——否则 Y 会多算一段空白带，掉到屏幕最底下。 */
+    background: transparent;
+    border-radius: 26px 26px var(--radius-sheet, 32px) var(--radius-sheet, 32px);
     /* clip, not hidden: a focused editor-strip input auto-SCROLLS a
        hidden-overflow container (programmatic scroll), shoving every
        absolutely-positioned layer (voice card, preedit) off the keyboard
@@ -342,20 +373,52 @@ body.landscape #symCatBar { margin-top: 3px; gap: 4px; }
     display: none;
     position: absolute;
     top: 0;
-    left: 8px;
+    left: 0;
+    right: 0;
     min-height: var(--preedit-band, 18px);
-    max-width: calc(100% - 16px);
-    overflow: hidden;
+    overflow: visible;
     white-space: nowrap;
-    text-overflow: ellipsis;
     align-items: center;
-    /* Raw pinyin must be legible at a glance (review note b). */
     font-size: calc(13px * var(--preedit-font-scale, 1));
     line-height: normal;
     color: var(--text);
     z-index: 5;
+    pointer-events: none;
 }
-body.composing #preeditLine { display: flex; }
+body.composing #preeditLine { display: block; }
+/* 默认不给拼音套一层跟着字数收缩的框。打开「拼音外框」才恢复胶囊。 */
+body.preedit-frame.composing #preeditLine {
+    left: 8px;
+    right: auto;
+    display: inline-flex;
+    width: auto;
+    max-width: calc(100% - 16px);
+    padding: 0 8px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: hsl(var(--bg-hue) calc(18% * var(--bg-sat, 1)) 50% / .28);
+}
+body.composing.preedit-aligned:not(.preedit-frame) .preedit-raw {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+}
+.py-slot {
+    position: absolute;
+    bottom: 0;
+    transform: translateX(-50%);
+    font-size: calc(11px * var(--preedit-font-scale, 1));
+    line-height: 1;
+    color: var(--text);
+    white-space: nowrap;
+}
+#candidates .candidate.ruby-target {
+    letter-spacing: 0.7em;
+    padding-left: 12px;
+    padding-right: 14px;
+}
 
 /* ===== 单手模式（issue #15）=====
  * body[data-one-hand="left"|"right"] 时 #softKeyboard 用同侧 padding 让位
@@ -581,6 +644,33 @@ body[data-side-content="blank"] #sideGrid { display: none; }
 }
 body[data-bg-image="on"] #bgImage { display: block; }
 body[data-bg-image="on"] #softKeyboard { background: transparent; }
+/* 厚霜与水光都放在 #glassField 上（它是叶子层，不包含任何 fixed 浮层）。 */
+#glassField {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+        linear-gradient(180deg, var(--glass-sheen), transparent 24%),
+        radial-gradient(70% 42% at 50% -8%, rgba(255, 255, 255, .42), transparent 68%),
+        linear-gradient(180deg, var(--sheet-top), var(--sheet-bottom));
+    -webkit-backdrop-filter: blur(var(--glass-blur, 28px)) saturate(1.45);
+    backdrop-filter: blur(var(--glass-blur, 28px)) saturate(1.45);
+}
+body[data-bg-image="on"] #softKeyboard {
+    background: transparent;
+}
+body[data-bg-image="on"] #glassField {
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, .34), transparent 30%),
+        linear-gradient(180deg, var(--glass-veil), var(--glass-veil-2));
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+}
+body[data-bg-image="on"] #bgImage {
+    filter: blur(calc(var(--glass-blur, 28px) + 10px));
+    transform: scale(1.14);
+}
 /* 拼音加粗（issue #8）：设置开关，默认关。 */
 body[data-preedit-bold="1"] #preeditLine { font-weight: 600; }
 body[data-preedit-font="large"] { --preedit-font-scale: 1.2; --preedit-band: 22px; }
@@ -598,7 +688,25 @@ body[data-preedit-font="xlarge"] { --preedit-font-scale: 1.35; --preedit-band: 2
     /* Ride lower, clear of the pinyin line above. */
     margin-top: 2px;
     margin-bottom: 10px;
+    padding: 0 4px;
+    border-radius: calc(var(--radius-key) + 6px);
+    background: hsl(var(--bg-hue) calc(34% * var(--bg-sat, 1)) var(--bar-l, 50%) / calc(0.7 + var(--panel-alpha) * 0.26));
+    box-shadow: inset 0 1px 0 var(--glass-sheen);
 }
+.clip-groups { display: flex; flex-wrap: wrap; gap: 6px; padding: 2px 2px 8px; }
+.clip-chip, .clip-extract, .clip-group-input {
+    border: 0;
+    border-radius: 999px;
+    background: var(--pill);
+    color: var(--text);
+    font-size: 11px;
+    padding: 4px 8px;
+}
+.clip-chip.on { color: var(--accent-ink); background: var(--accent); }
+.clip-extracts { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.clip-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.clip-group-input { width: 7em; font: inherit; }
+.panel-item { align-items: flex-start; }
 #candidateBar .tool {
     flex: none;
     width: 32px;
@@ -706,9 +814,9 @@ body.settings-page #candidateBar > .tool { display: none; }
      * min-height + flex 居中 + line-height:normal，行盒随字体自适应，
      * 药丸在候选条（40px，overflow hidden）内始终容得下完整字形。 */
     min-height: 34px;
-    padding: 0 8px;
+    padding: 0 12px;
     border: 0;
-    border-radius: 8px;
+    border-radius: calc(var(--radius-key) - 2px);
     background: transparent;
     color: var(--text);
     font-size: calc(17px * var(--cand-font-scale, 1));
@@ -725,7 +833,24 @@ body.settings-page #candidateBar > .tool { display: none; }
  * data 属性仅作测试锚点，不再驱动缩放；34px 行高预算不动。 */
 .candidate:active, .candidate.active-touch { background: var(--pressed); }
 /* First candidate: accent text on a pill (both themes, reference behaviour). */
-.candidate.first { color: var(--accent-text); background: var(--pill); }
+.candidate.first {
+    color: var(--accent-text);
+    background: var(--pill);
+    font-weight: 650;
+}
+body.preedit-frame .candidate.first {
+    box-shadow: inset 0 0 0 1px var(--accent);
+}
+/* 中英混输：拉丁词候选加一枚小 EN，方便和拼音缩写分开看。 */
+.candidate.en-mix::after {
+    content: "EN";
+    margin-left: 5px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    color: var(--accent-text);
+    opacity: .8;
+}
 
 #mic.listening { background: var(--mod-active-bg, #103a24); box-shadow: inset 0 0 0 1.5px var(--accent); color: var(--accent-text); animation: pulse 1.3s ease-in-out infinite; }
 #mic.loading { opacity: .55; color: var(--accent-text); }
@@ -739,9 +864,9 @@ body.settings-page #candidateBar > .tool { display: none; }
  * height funds the taller candidate bar. */
 /* 行内缝与缩进提成变量（#59 行对齐公式引用同一来源，竖屏/横屏
  * 改一处即可）。 */
-body { --kb-gap: 5px; --kb-indent: 4.9%; }
-body.landscape { --kb-gap: 4px; }
-.kb-row { display: flex; gap: var(--kb-gap); margin-bottom: 5px; }
+body { --kb-gap: 8px; --kb-indent: 4.2%; }
+body.landscape { --kb-gap: 6px; }
+.kb-row { display: flex; gap: var(--kb-gap); margin-bottom: 7px; }
 .kb-row:last-child { margin-bottom: 0; }
 .kb-row.kb-indent { padding: 0 var(--kb-indent); }
 /* #59 26 键行对齐：第三行字母键与第二行（缩进行）同宽，z..m 精确
@@ -777,6 +902,10 @@ body.landscape { --kb-gap: 4px; }
     border: 0;
     border-radius: var(--radius-key);
     background: var(--key);
+    /* 一整块霜面玻璃上的键：轻高光，不做出老式立体切边。
+     * 按下略缩小、略提亮，松手弹回。时长靠近现在的手机输入法。 */
+    box-shadow: inset 0 1px 0 var(--glass-sheen);
+    transition: transform 100ms ease-out, background-color 100ms ease-out;
     /* #61 review P1：键面亮度偏移过大时白字对比崩，JS 设 --key-ink 翻深墨；缺省回落 --text。 */
     color: var(--key-ink, var(--text));
     /* 功能键文字（issue #70）：跟随键帽字号缩放；无角标碰撞，不设上限。 */
@@ -787,8 +916,22 @@ body.landscape { --kb-gap: 4px; }
     justify-content: center;
     touch-action: none;
 }
-.kb-key:active, .kb-key.active-touch, .sym-tab:active, .sym-tab.active-touch { background: var(--pressed); }
-.kb-key.kb-letter { flex-direction: column; gap: 2px; }
+.kb-key:active, .kb-key.active-touch, .sym-tab:active, .sym-tab.active-touch {
+    background: var(--pressed);
+    transform: scale(0.94);
+    transition-duration: 45ms;
+}
+.candidate { transition: transform 100ms ease-out, background-color 100ms ease-out; }
+.candidate:active, .candidate.active-touch {
+    transform: scale(0.97);
+    transition-duration: 45ms;
+}
+@media (prefers-reduced-motion: reduce) {
+    .kb-key, .sym-tab, .candidate { transition: none; }
+    .kb-key:active, .kb-key.active-touch, .sym-tab:active, .sym-tab.active-touch,
+    .candidate:active, .candidate.active-touch { transform: none; }
+}
+.kb-key.kb-letter { flex-direction: column; align-items: center; justify-content: center; }
 /* Glyphs scale with the row height (dragging the keyboard
  * shorter shrinks the font too - nothing overflows the key face). */
 /* 键帽字号（issue #70）：基准 × --keycap-font-scale，再被「行高-16px」
@@ -799,19 +942,22 @@ body.landscape { --kb-gap: 4px; }
 /* 上下滑互换（issue #29-2）：小字提示跟着翻到主字下方（提示的是下滑值）；
  * 标点槽是墨形绝对定位，主字（inset 42%/12%）与 alt 要一起上下镜像，
  * 只翻 alt 会两个墨形挤在下半键（验收 2026-09-24 实录）。 */
-body.flick-swap .kb-key.kb-letter { flex-direction: column-reverse; }
+body.flick-swap .kb-key.kb-letter { flex-direction: column; }
 /* #39-3（间距）：角标钉键顶 3px、主字沉键底（上方留 4px）——两者分
  * 离到键的两端，任意行高都不重叠。1.3.1 首版只钉了角标、主字仍居
  * 中，44px 行高下主字上半与角标重叠约 2px（用户实测「y/6 上下间距
  * 也更小了」「显示重叠」）；更早的整体居中布局角标贴主字太近也是同
  * 一诉求（拉开间距）。互换布局（column-reverse）镜像：角标钉底、主
  * 字浮顶。 */
-.kb-key.kb-letter { position: relative; justify-content: flex-end; padding-bottom: 4px; }
-.kb-key.kb-letter .kb-alt { position: absolute; top: 3px; left: 0; right: 0; }
-body.flick-swap .kb-key.kb-letter { justify-content: flex-end; padding-top: 4px; padding-bottom: 0; }
-body.flick-swap .kb-key.kb-letter .kb-alt { top: auto; bottom: 3px; }
+/* 主字母在键心。角标绝对定位在顶上，不把主字挤下去。
+ * 上下滑互换只把角标翻到底，主字仍居中。 */
+.kb-key.kb-letter { position: relative; justify-content: center; align-items: center; padding: 0; }
+.kb-key.kb-letter .kb-main { position: relative; z-index: 1; }
+.kb-key.kb-letter .kb-alt { position: absolute; top: 5px; left: 0; right: 0; font-size: 9px; }
+body.flick-swap .kb-key.kb-letter { justify-content: center; padding: 0; }
+body.flick-swap .kb-key.kb-letter .kb-alt { top: auto; bottom: 4px; }
 body.flick-swap .kb-key[data-key="."] .kb-alt { top: auto; bottom: 4px; }
-body.flick-swap .kb-key.zh-punct .kb-main { inset: 12% 0 42%; }
+body.flick-swap .kb-key.zh-punct .kb-main { inset: 26% 0 26%; }
 body.flick-swap .kb-key.zh-punct .kb-alt { top: auto; bottom: 12%; }
 /* Follow-up: an armed Fn key turns its twelve letter caps into
  * F1..F12. Keep the label on one line and let the single visible glyph use
@@ -1641,7 +1787,8 @@ body.landscape .num-grid { gap: 3px; }
 /* Chinese punctuation uses centered ink shapes instead of font-dependent
  * fullwidth side bearings. Text remains in the spans for accessibility. */
 .kb-key.zh-punct .kb-main {
-    inset: 42% 0 12%;
+    position: absolute;
+    inset: 26% 0 26%;
     font-size: 0;
 }
 .kb-key.zh-punct .kb-main::after {
@@ -1744,6 +1891,14 @@ body[data-one-hand] .panel-head { gap: 5px; }
 .panel-head { height: 40px; padding: 0; margin: 2px 0 10px; }
 body.landscape .panel-head { margin: var(--preedit-band, 18px) 0 4px; }
 .panel-tabs { margin: 0; }
+.clip-total {
+    flex: none;
+    margin-left: 8px;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 550;
+    white-space: nowrap;
+}
 .panel-action { color: var(--text); height: 30px; margin-left: auto; }
 /* 「清空」确认态（#39 两击确认） */
 .panel-action.danger { color: var(--danger); font-weight: 600; }
@@ -1793,7 +1948,8 @@ body.landscape .panel-head { margin: var(--preedit-band, 18px) 0 4px; }
 
 .panel-item {
     display: flex;
-    align-items: center;
+    flex-wrap: wrap;
+    align-items: flex-start;
     gap: 8px;
     width: 100%;
     min-height: 44px;
@@ -2078,10 +2234,12 @@ body.landscape #ctrlLayer .ctrl-close svg { width: 12px; height: 12px; }
     max-width: 70%;
     overflow-y: auto;
     z-index: 30;
-    padding: 4px;
-    border-radius: 12px;
+    padding: 6px;
+    border-radius: var(--radius-card);
     background: var(--panel);
-    box-shadow: 0 -10px 28px #000a;
+    box-shadow:
+        inset 0 1px 0 var(--glass-sheen),
+        0 16px 36px #0008;
 }
 #modeMenu.open { display: grid; }
 /* Compact rows (32px, was 42 - five items exceeded the
@@ -2092,16 +2250,19 @@ body.landscape #ctrlLayer .ctrl-close svg { width: 12px; height: 12px; }
     justify-content: flex-start;
     align-items: center;
     gap: 9px;
-    min-height: 32px;
-    padding: 0 10px;
+    min-height: 40px;
+    padding: 4px 10px;
     border: 0;
-    border-radius: 7px;
+    border-radius: calc(var(--radius-key) - 4px);
     background: transparent;
     color: var(--text);
     font-size: 12.5px;
     text-align: left;
 }
+#modeMenu .mm-copy { display: flex; flex-direction: column; min-width: 0; line-height: 1.15; }
+#modeMenu .mm-hint { font-size: 10px; font-weight: 400; color: var(--muted); }
 #modeMenu button.current { color: var(--accent-text); font-weight: 700; }
+#modeMenu button.current .mm-hint { color: var(--accent-text); opacity: .75; }
 #modeMenu button.preparing { color: var(--muted); }
 #modeMenu button .prep {
     min-width: 22px;
@@ -2133,11 +2294,12 @@ body.landscape #ctrlLayer .ctrl-close svg { width: 12px; height: 12px; }
     top: 42%;
     transform: translate(-50%, -50%);
     z-index: 1;
-    width: 230px;
+    width: 246px;
     padding: 16px 16px 14px;
-    border-radius: 14px;
+    border-radius: var(--radius-card);
     background: var(--card-bg);
     color: var(--card-text);
+    border: 1px solid var(--glass-edge);
     /* Theme-aware card on a themed scrim - the deep shadow keeps
      * it reading as a floating layer in BOTH colour modes. 
      * max-height keeps the card inside short (landscape) keyboards. */
@@ -2290,6 +2452,14 @@ body.landscape #voiceSlideHint { margin-top: 48px; padding: 5px 13px; font-size:
     transition: transform 80ms linear;
 }
 #voiceHint { font-size: 11px; color: var(--card-sub); }
+#voiceGuide {
+    font-size: 11px;
+    line-height: 1.35;
+    color: var(--card-sub);
+    text-align: center;
+    max-width: 220px;
+}
+body.landscape #voiceGuide { display: none; }
 
 /* ===== Long-press popup ===== */
 /* Candidates flow in a wrap grid up to three columns (the reference 3x3) and
@@ -2308,18 +2478,20 @@ body.landscape #voiceSlideHint { margin-top: 48px; padding: 5px 13px; font-size:
     position: fixed;
     z-index: 30;
     pointer-events: none;
-    min-width: 44px;
-    height: 50px;
-    padding: 0 12px;
-    border-radius: 8px;
+    min-width: 48px;
+    height: 54px;
+    padding: 0 14px;
+    border-radius: calc(var(--radius-key) - 2px);
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--panel);
+    background: var(--pill);
     color: var(--text);
-    box-shadow: 0 3px 12px #000a;
-    font-size: 26px;
-    font-weight: 500;
+    box-shadow:
+        inset 0 1px 0 var(--glass-sheen),
+        0 8px 20px rgba(0, 0, 0, .24);
+    font-size: 28px;
+    font-weight: 560;
     line-height: 1;
 }
 #keyBubble[hidden] { display: none; }
@@ -2335,7 +2507,7 @@ body.landscape #voiceSlideHint { margin-top: 48px; padding: 5px 13px; font-size:
 .kp-item {
     width: 47px;
     height: 45px;
-    border-radius: 6px;
+    border-radius: calc(var(--radius-key) - 6px);
     display: flex;
     align-items: center;
     justify-content: center;

@@ -83,20 +83,46 @@
     </section>
 
     <nav class="card entries" id="entries" aria-label="设置分组" data-i18n-aria="nav.groups">
-      <button class="entry" type="button" data-target="appearance">
-        <span class="entry-label"><span data-i18n="entry.appearance.title">外观</span><small data-i18n="entry.appearance.subtitle">色彩模式 · 背景图片 · 透明度</small></span>
+      <p class="entry-group" data-i18n="nav.group.daily">日常</p>
+      <button class="entry" type="button" data-target="appearance" data-keywords="外观 皮肤 壁纸 玻璃 配色 主题">
+        <span class="entry-label"><span data-i18n="entry.appearance.title">外观与皮肤</span><small data-i18n="entry.appearance.subtitle">液态玻璃 · 配色 · 壁纸</small></span>
         <span class="entry-chevron" aria-hidden="true">›</span>
       </button>
+      <button class="entry" type="button" data-target="keyboards" data-keywords="全拼 双拼 九键 九宫格 笔画 布局 键盘">
+        <span class="entry-label"><span data-i18n="entry.layout.title">键盘布局</span><small data-i18n="entry.layout.subtitle">全拼 · 双拼 · 九键 · 笔画</small></span>
+        <span class="entry-chevron" aria-hidden="true">›</span>
+      </button>
+      <button class="entry" type="button" data-target="fuzzy" data-keywords="模糊音 平翘舌 前后鼻音 n l">
+        <span class="entry-label"><span data-i18n="entry.fuzzy.title">模糊音</span><small data-i18n="entry.fuzzy.subtitle">平翘舌 · 前后鼻音 · n/l</small></span>
+        <span class="entry-chevron" aria-hidden="true">›</span>
+      </button>
+      <button class="entry" type="button" data-target="input" data-anchor="sec-assoc" data-keywords="联想 候选 英文 混输 造词">
+        <span class="entry-label"><span data-i18n="entry.candidates.title">候选与联想</span><small data-i18n="entry.candidates.subtitle">联想 · 中英混输 · 英文词位置</small></span>
+        <span class="entry-chevron" aria-hidden="true">›</span>
+      </button>
+      <button class="entry" type="button" data-target="dict" data-keywords="词库 导入 自造词">
+        <span class="entry-label"><span data-i18n="entry.dict.title">词库</span><small data-i18n="entry.dict.subtitle">导入词库 · 自造词 · 常用语</small></span>
+        <span class="entry-chevron" aria-hidden="true">›</span>
+      </button>
+      <button class="entry" type="button" data-target="voice" data-keywords="语音 普通话 离线 标点">
+        <span class="entry-label"><span data-i18n="entry.voice.title">语音输入</span><small data-i18n="entry.voice.subtitle">离线识别 · 普通话说明 · 标点</small></span>
+        <span class="entry-chevron" aria-hidden="true">›</span>
+      </button>
+      <button class="entry" type="button" data-target="dict" data-anchor="sec-clipboard" data-keywords="剪贴板 常用语 符号词">
+        <span class="entry-label"><span data-i18n="entry.clip.title">剪贴板与常用语</span><small data-i18n="entry.clip.subtitle">只存在本机 · 常用语与符号词</small></span>
+        <span class="entry-chevron" aria-hidden="true">›</span>
+      </button>
+      <button class="entry" type="button" data-target="input" data-anchor="keySound" data-keywords="按键音 振动 音效 气泡">
+        <span class="entry-label"><span data-i18n="entry.feedback.title">按键音效与振动</span><small data-i18n="entry.feedback.subtitle">声音 · 振动 · 气泡</small></span>
+        <span class="entry-chevron" aria-hidden="true">›</span>
+      </button>
+      <button class="entry" type="button" data-target="about" data-anchor="sec-privacy" data-keywords="隐私 离线 上传">
+        <span class="entry-label"><span data-i18n="entry.privacy.title">隐私与离线</span><small data-i18n="entry.privacy.subtitle">按键、语音、壁纸都不上传</small></span>
+        <span class="entry-chevron" aria-hidden="true">›</span>
+      </button>
+      <p class="entry-group" data-i18n="nav.group.more">更多</p>
       <button class="entry" type="button" data-target="input">
-        <span class="entry-label"><span data-i18n="entry.input.title">键盘与输入</span><small data-i18n="entry.input.subtitle">双拼 · 定制按键</small></span>
-        <span class="entry-chevron" aria-hidden="true">›</span>
-      </button>
-      <button class="entry" type="button" data-target="dict">
-        <span class="entry-label"><span data-i18n="entry.dict.title">词库</span><small data-i18n="entry.dict.subtitle">导入 rime 词库 · 叠加候选</small></span>
-        <span class="entry-chevron" aria-hidden="true">›</span>
-      </button>
-      <button class="entry" type="button" data-target="voice">
-        <span class="entry-label"><span data-i18n="entry.voice.title">语音识别</span><small data-i18n="entry.voice.subtitle">语音模型 · 识别设置</small></span>
+        <span class="entry-label"><span data-i18n="entry.input.title">键盘与输入</span><small data-i18n="entry.input.subtitle">手感 · 双拼方案 · 定制按键</small></span>
         <span class="entry-chevron" aria-hidden="true">›</span>
       </button>
       <button class="entry" type="button" data-target="update">
@@ -182,7 +208,7 @@
     <label class="row switch-row" for="keyBubble">
       <span class="row-label">
         <span data-i18n="input.feel.keyBubble">按键气泡</span>
-        <small data-i18n="input.feel.keyBubbleHint">按下按键时在键帽上方放大显示所按的字符，方便确认有没有按错（默认关闭）。</small>
+        <small data-i18n="input.feel.keyBubbleHint">按下按键时在键帽正上方放大显示所按的字符，松手后停留一会儿再消失（默认开启）。</small>
       </span>
       <input type="checkbox" id="keyBubble" data-keywords="按键放大 预览 气泡 按错了 key preview bubble" class="toggle">
     </label>
@@ -289,7 +315,7 @@
   <div class="row language-row">
       <span class="row-label">
         <span data-i18n="input.feel.bgImageLight">亮色背景</span>
-        <small data-i18n="input.feel.bgImageHint">铺满整个键盘区域（工具条到底部留白），压缩到 720px 宽存储，只在本机生效。</small>
+        <small data-i18n="input.feel.bgImageHint">自定义壁纸铺满整个键盘区域（工具条到底部留白），压缩到 720px 宽后只存在本机，不会上传。</small>
       </span>
       <select id="bgImageLight" class="select" aria-label="亮色背景" data-i18n-aria="input.feel.bgImageLight">
         <option value="none" data-i18n="无">无</option>
@@ -378,6 +404,45 @@
         </span>
       </span>
     </div>
+  </section>
+  <section class="card" aria-labelledby="glassHead">
+    <div class="section-heading"><h2 id="glassHead" data-i18n="input.feel.glassTitle">液态玻璃</h2><span class="eyebrow" data-i18n="input.feel.glassBadge">皮肤</span></div>
+    <p class="hint block" data-i18n="input.feel.systemBarNote">地球仪和收起键盘那一行由手机系统设置显示或隐藏，Feelime 不另画一条，也没有开关去关它。系统画出这一条时，键盘会按系统报来的底部空白把按键抬上去，避免挡住系统按钮。</p>
+    <div class="row stack" id="glassSkinRow" data-keywords="皮肤 液态玻璃 主题 磨砂 圆角 透明度">
+      <span class="row-label">
+        <span data-i18n="input.feel.glassSkin">内置皮肤</span>
+        <small data-i18n="input.feel.glassSkinHint">一套皮肤会同时设定色调、透明度、磨砂和圆角。之后仍可以单独微调，微调后不再算某一套皮肤。</small>
+      </span>
+      <div class="skin-grid" id="glassSkinGrid" role="radiogroup" aria-label="内置皮肤"></div>
+    </div>
+    <div class="row language-row">
+      <span class="row-label">
+        <span data-i18n="input.feel.glassBlur">磨砂强度</span>
+        <small data-i18n="input.feel.glassBlurHint">背景和壁纸的高斯模糊。0 是清晰，数字越大越像雾面玻璃。</small>
+      </span>
+      <input type="range" id="glassBlur" class="slider" min="0" max="32" step="1" aria-label="磨砂强度" data-i18n-aria="input.feel.glassBlur">
+    </div>
+    <div class="row language-row">
+      <span class="row-label">
+        <span data-i18n="input.feel.glassRadius">圆角</span>
+        <small data-i18n="input.feel.glassRadiusHint">键帽和浮层的圆角。越大越圆。</small>
+      </span>
+      <input type="range" id="glassRadius" class="slider" min="8" max="28" step="1" aria-label="圆角" data-i18n-aria="input.feel.glassRadius">
+    </div>
+    <div class="row language-row">
+      <span class="row-label">
+        <span data-i18n="input.feel.panelOpacity">面板透明度</span>
+        <small data-i18n="input.feel.panelOpacityHint">候选条、菜单和语音卡片有多透。文字保持实色，方便看清。</small>
+      </span>
+      <input type="range" id="panelOpacity" class="slider" min="35" max="100" step="1" aria-label="面板透明度" data-i18n-aria="input.feel.panelOpacity">
+    </div>
+    <label class="row switch-row" for="preeditFrame">
+      <span class="row-label">
+        <span data-i18n="input.feel.preeditFrame">拼音外框</span>
+        <small data-i18n="input.feel.preeditFrameHint">给正在输入的拼音再套一个随字数收缩的框。默认关，拼音直接写在对应汉字上方。</small>
+      </span>
+      <input type="checkbox" id="preeditFrame" class="toggle">
+    </label>
   </section>
   </main>
 </div>
@@ -828,6 +893,10 @@
     <h2 class="page-title" data-i18n="page.dict">词库</h2>
   </header>
   <main>
+    <section class="card" id="sec-clipboard" aria-labelledby="clipboardNoteTitle">
+      <div class="section-heading"><h2 id="clipboardNoteTitle" data-i18n="clip.title">剪贴板与常用语</h2><span class="eyebrow" data-i18n="clip.badge">本机</span></div>
+      <p class="hint block" data-i18n="clip.note">键盘工具栏里的剪贴板只保存在这台手机上，不上传，也不进云备份。条数不另设上限，全部正文大约 32MB。复制一段文字后，点键盘上的剪贴板图标就能贴回去。常用语和符号词在下面管理。</p>
+    </section>
     <!-- 基底词库（issue #23）：整库换装，设备端 librime maintenance 现场编译。
          与下方「导入词库」（叠加词条）是两个通道：换基底 vs 加词条。 -->
     <section class="card" id="sec-dict-base" aria-labelledby="dictBaseTitle">
@@ -1035,6 +1104,7 @@
 
     <section class="card" id="sec-asr" aria-labelledby="asrTitle">
       <div class="section-heading"><h2 id="asrTitle" data-i18n="voice.asr.title">语音识别设置</h2><span class="eyebrow" data-i18n="voice.asr.badge">识别</span></div>
+      <p class="hint block" data-i18n="voice.asr.honest">当前离线模型对较标准的普通话效果最好：语速放稳、环境安静，说完一句再点「说完了」。标点由本机标点模型自动补上（不是喊「逗号」），句尾句号可以在下面关掉。这里不会把声音传到网上，也不能靠换设置凭空提高识别率。</p>
       <div class="rows">
         <label class="row switch-row" for="stripPeriod">
           <span class="row-label"><span data-i18n="voice.asr.stripPeriod">去掉句尾句号</span><small data-i18n="voice.asr.stripHint">问号、叹号保留；关闭后保留模型输出</small></span>
@@ -1227,6 +1297,11 @@
       </div>
       <p class="hint" data-i18n="about.copyHint">反馈问题时直接粘贴；复制内容标记为敏感，不会进入键盘剪贴板历史。</p>
       <p class="hint" data-i18n="about.offlineHint">全程离线：语音识别与文字候选都不联网。</p>
+    </section>
+
+    <section class="card" id="sec-privacy" aria-labelledby="privacyTitle">
+      <div class="section-heading"><h2 id="privacyTitle" data-i18n="privacy.title">隐私与离线</h2><span class="eyebrow" data-i18n="privacy.badge">本机</span></div>
+      <p class="hint block" data-i18n="privacy.note">按键、候选、语音和壁纸都只留在这台手机上。Feelime 不上传输入内容，也不带统计上报。语音模型是随安装包或你手动下载的离线模型。诊断开关只在你打开之后记录引擎事件，不含你打过的字。</p>
     </section>
 
     <section class="card" id="sec-diagnostics" aria-labelledby="diagTitle">

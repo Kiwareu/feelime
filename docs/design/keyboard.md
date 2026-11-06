@@ -67,7 +67,12 @@ update/），完整设置页在 `app/src/main/assets/settings/`。
 | `--card-bg` / `--card-text` / `--card-sub` | `#2b2b31` / `#e8e8e8` / `#a2a2ac` | `#f7f7fa` / `#1c1c24` / `#6a6a78` | 浮卡（常用语编辑卡、高度卡） |
 | `--input-placeholder` / `--key-subtext` | `#dedede` | `#5c616b` | 输入框占位/键面副字 |
 | `--scrim` | `#000000b8` | `#ffffffb0` | 语音浮层遮罩 |
-| `--radius-key` / `--radius-card` | `5px` / `10px` | 同左 | 圆角 |
+| `--radius-key` / `--radius-card` | `22px` / `28px` | 同左 | 圆角（皮肤页可调键圆角 8–28px，卡片约为 1.35 倍） |
+| `--key-alpha` / `--panel-alpha` | `0.72` / `0.42` | 同左 | 键帽 / 面板通透度；文字不跟随变淡 |
+| `--glass-blur` | `26px` | 同左 | 背景与壁纸的磨砂强度 |
+| `--radius-sheet` | `32px` | 同左 | 键盘底板下沿圆角 |
+
+按下：键与候选在约 45ms 内缩到 0.94 / 0.97 并换成 `--pressed`，松手约 100ms 弹回。不另加厚边或立体切角。按键振动仍只跟「按键振动」开关，打开时是一记短轻击（弱/中/强约 8/10/14ms）。
 
 - 强调**填充**与强调**文字**分开：绿底上用 `--accent-ink`，普通底上用
   `--accent-text`；禁止拿 `--accent` 直接当小字文字色。
@@ -83,7 +88,7 @@ update/），完整设置页在 `app/src/main/assets/settings/`。
 
 ### 1.2 几何与高度预算
 
-- 键高 `--kb-row-h`（默认 44px），键圆角 5px，水平间距 5px，行距 5px，
+- 键高 `--kb-row-h`（默认 44px），键圆角默认 22px（`--radius-key`），水平间距 8px，行距 7px，
   左右边缘 4px；底行 flex 权重：123=2.1、标点=1.0、空格=4.15、中英=1.15、
   enter=2.25。
 - 竖屏内容预算：工具栏 40px + 候选条 + 4 行键 + 行距 + 底部边距 ≈ 272px
@@ -108,8 +113,9 @@ update/），完整设置页在 `app/src/main/assets/settings/`。
 ### 1.3 输入态（composing）
 
 - `body.composing` 状态类由引擎事件维护。
-- preedit（拼音/罗马字原串）显示在 `#preeditLine`（10px 小字，左对齐），
-  **不写入宿主编辑器**（§5.2）。
+- preedit（拼音/罗马字原串）显示在 `#preeditLine`，**不写入宿主编辑器**（§5.2）。
+  全拼/双拼/九宫格把音节逐个放到首个候选汉字的正上方，不再整串贴在最左边。
+  默认没有随字数收缩的外框；皮肤页「拼音外框」打开后才恢复那层胶囊。
 - 组合态隐藏与输入无关的工具按钮；**麦克风在录音中不隐藏**（长按空格可以在
   组合中进入语音，必须保留停止入口）；候选条保留（点选/横滑）。
 - 首候选绿字 + pill（`--pill`，圆角 8px）；enter 键文案组合态「确定」、
@@ -327,10 +333,15 @@ update/），完整设置页在 `app/src/main/assets/settings/`。
 ### 3.5 容量与截断
 
 - 剪贴板项文本预览**两行截断显示，存储不截断**（截断副本=静默数据损坏）。
-- 剪贴板总预算 64KB（各条目 text 的 UTF-8 字节和 + 8KB 元数据余量），入队
-  后循环弹出最旧直到达标；同文本置顶去重。
-- 粘贴上限 2000 code point（`MAX_COMMIT_CODE_POINTS`）：超长条目在面板
-  置灰不可点，标注「内容过长」——存得下≠贴得出。
+- 剪贴板**不设条数上限**。唯一阀门是全部正文的 UTF-8 大约 32MB
+  （本机还能稳妥保存的量）。单条超过这个预算整条不收，不是把正文
+  切成一两百字。只存在本机，不进云备份。
+- 工具栏剪贴板图标不显示条数。打开剪贴板面板后，标题旁显示总数
+  （如「12 条」）。常用语页不显示这个数字。
+- 条目可归入用户自建分组（最多 24 个、名最长 16 字）。一条混杂内容
+  可以一键只贴出链接、邮箱、手机号、连续数字或连续中文。
+- 粘贴上限 100000 code point（`MAX_COMMIT_CODE_POINTS`）：再长的条目
+  在面板置灰，标注「内容过长」。
 - 常用语单条 ≤200 字、≤200 条；输入码 ≤12 字符、位次 1–99。
 
 ## 3a. 候选符号词（issue #17）
@@ -1261,10 +1272,17 @@ CANCEL+DOWN+UP 终结流）不授权清理新指、注入脚本在渲染侧执�
   （displayMetrics + orientation + prefs override），**不吃窗口瞬时
   measure spec**——弹窗/旋转动画期间的过渡 spec 会把错误高度烤死；横屏
   预算加 `lastSafeBottom`；扩展带按 `min(200dp, 30%×真实屏)` 收缩。
-- **safe area**：decorView `OnApplyWindowInsetsListener` 监听导航条
-  inset（变化即重推 hello）；系统报 0 且横屏时取平台
-  `navigation_bar_height` 兜底（上限 32dp，手势条是细条；竖屏不兜）。
-  旋转时 `onConfigurationChanged` → 重推 hello。
+- **safe area**：decorView `OnApplyWindowInsetsListener` 监听底部
+  inset（变化即重推 hello）。取值是 IME 窗口 decor 与
+  `WindowMetrics` 的较大者，类型为 `navigationBars`、
+  `tappableElement`、`mandatorySystemGestures`、`captionBar` 的 bottom。
+  不收 `systemGestures`（左右返回热区过大，系统条关闭时也会垫高键盘）。
+  系统报 0 且横屏时取平台 `navigation_bar_height` 兜底（上限 32dp；
+  竖屏不兜）。旋转时 `onConfigurationChanged` → 重推 hello。
+- **系统底部栏（地球仪 / 收起键盘）**：由系统设置显示或隐藏，Feelime
+  不绘制、不提供开关、也不再在横屏 `hide(navigationBars)`。系统画出
+  这一条时，上面的 inset 会变大，键区用 `--safe-bottom` 让开，触摸仍
+  留给系统自己的按钮。系统条关闭且 inset 为 0 时，键盘铺满到底。
 - **拖动**：JS 拖动 rAF 节流（每帧一次 native 调用），native prefs
   写入 300ms debounce；高度未变不 requestLayout；松手/加减应用后高度卡
   随键盘上沿重新定位；拖动中预览数值；「恢复默认」只设待保存值不改实际

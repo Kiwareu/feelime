@@ -1106,8 +1106,8 @@ class KeyboardWorld {
     }
 
     // ---- panel payload injectors (FeelimeService pushes these after a get*)
-    clipboard(items) {
-        this.context.window.Feelime.onClipboard({ items });
+    clipboard(items, groups) {
+        this.context.window.Feelime.onClipboard({ items, groups: groups || [] });
     }
 
     favorites(items) {

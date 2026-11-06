@@ -37,6 +37,9 @@
   （onFinishInputView 推空，onStartInputView 再兜一次——同编辑器收起再弹出
   不走 onStartInput，不清的话联想词与工具栏让位态原样残留，device 复现
   2026-09-20）、模式切换、关闭开关。
+- 本机习惯（`feelime_assoc_habit`）：连续两次上屏的汉字会记下
+  「前词 → 后词」。下次联想把这些后词排在语料表前面（每前词最多 4 个，
+  一共最多 80 个前词）。不上传。
 - 点击联想词：`Native.commitAssoc(word, token)` → coordinator.pasteExternal
   写入编辑器，等本次 Reset 回声与文字提交都完成后，以该词为前词查询
   下一轮联想（连续联想）。等待期间收起、切换编辑器/面板或接受后续输入

@@ -2690,13 +2690,17 @@ test('panel head carries no toolbar icons; a single X closes (#39-4)', {since: '
     // hidden 但仍属 head 固定件。
     const ids = [...head().children].map(el => el.id)
         .filter(id => id && id !== 'kaomojiTabs');
-    equal(ids.join(','), 'panelClear,panelManage,panelClose',
-        `head = clear/manage + X only (no toolbar icons, no hide): ${ids}`);
+    equal(ids.join(','), 'clipTotal,panelClear,panelManage,panelClose',
+        `head = total + clear/manage + X (no toolbar icons): ${ids}`);
+    assert(!world.$('clipTotal').hidden, 'clipboard panel shows the total');
+    assert(!world.$('clipboardButton').querySelector('.clip-count'), 'toolbar icon has no badge');
+    assert(!/\d/.test(world.$('clipboardButton').textContent || ''), 'toolbar icon text has no count');
     // 工具栏整条隐藏：右组（含语音输入）一颗都进不了面板头。
     equal(world.$('candidateBar').hidden, true, 'toolbar hidden while the panel owns the row');
     // tab 切换走 head 内的 tab 按钮。
     world.tap(world.document.querySelector('[data-panel-tab="favorites"]'));
     equal(world.$('panelManage').hidden, false, 'favorites tab shows +添加');
+    assert(world.$('clipTotal').hidden, 'total stays off the favorites tab');
     // × 关面板，工具栏回来。
     world.tap(world.$('panelClose'));
     equal(world.$('panelLayer').hidden, true, 'X closes the panel');
@@ -4418,10 +4422,14 @@ test('long-press menu filters to the enabled keyboards', {since: '3.59.0'}, () =
     world.touchDown(world.$('modeToggle'));
     world.clock.advance(360);
     world.touchUp(world.$('modeToggle'));
-    const titles = [...world.$('modeMenu').children].map(el => el.textContent);
+    const titles = [...world.$('modeMenu').children].map(el => {
+        const title = el.querySelector('.mm-title');
+        return title ? title.textContent : el.textContent;
+    });
     // round-6：菜单不再带「快捷切换」尾行。
     // 顺序 = MODES 键序 ∩ 勾选集（direct < t9 < handwriting）。
-    equal(JSON.stringify(titles.map(x => x.replace(/^(En|九|…)/, ''))),
+    // 3.74.0 起标题在 .mm-title，副文案不参与断言。
+    equal(JSON.stringify(titles),
         JSON.stringify(['英文 Direct', '九宫格 T9', '手写 Handwriting']),
         'menu lists only enabled keyboards');
 });
@@ -5025,7 +5033,12 @@ test('mode menu lists all modes; selecting emits selectMode', {since: '3.33.0'},
     // round-6：默认勾选集 En/全拼/双拼/九宫格/笔画（手写实验性默认
     // 不进菜单；fr/ru/ja 依旧不进；菜单不再带快捷切换行）。
     equal(items.length, 5, 'default enabled set only');
-    equal(items[0].textContent, 'En英文 Direct', 'first item: shorthand leads, title follows');
+    const lead = el => {
+        const prep = el.querySelector('.prep');
+        const title = el.querySelector('.mm-title');
+        return prep && title ? prep.textContent + title.textContent : el.textContent;
+    };
+    equal(lead(items[0]), 'En英文 Direct', 'first item: shorthand leads, title follows');
     world.tap(items[0]);
     equal(world.native.of('selectMode').length, 0, 'direct is current, no call');
     world.touchDown(toggle);
@@ -5407,6 +5420,8 @@ test('key bubble stays off by default; hello arms it per press', {since: '3.60.0
     world.touchDown(key);
     equal(bubble.hidden, false, 'hello keyBubble=true shows the bubble on press');
     equal(bubble.textContent, 'h', 'bubble shows the pressed glyph');
+    const keyRect = key.getBoundingClientRect();
+    assert(parseFloat(bubble.style.top) < keyRect.top, 'bubble sits above the pressed key');
     world.touchUp(key);
     // 停留窗口（验收 2026-09-24，默认 400ms）：松手不立刻消失。
     assert(!bubble.hidden, 'release keeps the bubble through the linger window');
@@ -6089,6 +6104,14 @@ test('japanese mode keeps qwerty; space stays mic-only', () => {
 });
 
 // ---------------------------------------------------------------- C candidates
+
+test('pinyin splits into one syllable per character', () => {
+    const world = fresh({ mode: 'pinyin' });
+    const pieces = raw => world.context.window.Feelime.pinyinPieces(raw).join(' ');
+    equal(pieces('nihao'), 'ni hao', 'nihao');
+    equal(pieces('zhongguo'), 'zhong guo', 'zhongguo');
+    equal(pieces('n'), 'n', 'incomplete syllable stays visible');
+});
 
 test('C2/C3/C7 candidates render, choose and page with revision', () => {
     const world = fresh();
@@ -6941,12 +6964,13 @@ test('shift applies to accented popup selection (é → É)', {since: '3.59.0'},
 
 test('clipboard button opens panel and requests clipboard', () => {
     const world = fresh();
+    const before = world.native.of('getClipboard').length;
     world.tap(world.$('clipboardButton'));
     assert(!world.$('panelLayer').hidden, 'panel visible');
     assert(world.$('qwertyLayer').hidden, 'letters hidden behind panel');
     assert(world.$('panelClose'), 'close control exists');
-    equal(world.native.of('getClipboard').length, 1, 'clipboard requested');
-    equal(world.native.of('getClipboard')[0].args[0], 'tok-1', 'token attached');
+    equal(world.native.of('getClipboard').length, before + 1, 'clipboard requested');
+    equal(world.native.of('getClipboard').slice(-1)[0].args[0], 'tok-1', 'token attached');
     world.tap(world.$('panelClose'));
     assert(world.$('panelLayer').hidden, 'panel closed');
     assert(!world.$('qwertyLayer').hidden, 'letters restored');
@@ -6996,6 +7020,24 @@ test('remove and clear clipboard hit the bridge with hex ids', () => {
         world.tap(world.$('panelClear'));
     }
     equal(world.native.of('clearClipboard').length, 1, 'clearClipboard called');
+});
+
+test('a mixed clip can paste just the link', {since: '3.74.2'}, () => {
+    const world = fresh();
+    world.clipboard([
+        { id: 'a1', time: 1, text: '订单号 13800138000 详见 https://example.com/a 谢谢' },
+        { id: 'b2', time: 2, text: '另一条', group: '工作' },
+    ], ['工作']);
+    assert(!world.$('clipboardButton').querySelector('.clip-count'), 'toolbar has no count badge');
+    world.tap(world.$('clipboardButton'));
+    assert(/2/.test(world.$('clipTotal').textContent), 'panel shows the clip total');
+    assert(!world.$('clipTotal').hidden, 'total is visible inside the panel');
+    const link = [...world.document.querySelectorAll('.clip-extract')]
+        .find(node => /example\.com/.test(node.textContent));
+    assert(link, 'link chip is offered');
+    world.tap(link);
+    const pasted = world.native.of('pasteText').slice(-1)[0] || world.native.of('commitText').slice(-1)[0];
+    equal(pasted.args[0], 'https://example.com/a', 'only the url is pasted');
 });
 
 test('empty panel collapses the list block instead of a blank slab', {since: '3.55.0'}, () => {
@@ -7052,7 +7094,7 @@ test('P3b panel rows use native clicks (no touch handlers)', () => {
 
 test('over-long clipboard item renders disabled and never commits', () => {
     const world = fresh();
-    const huge = 'x'.repeat(2001);
+    const huge = 'x'.repeat(100001);
     world.clipboard([{ id: 'big', time: 1, text: huge }]);
     world.tap(world.$('clipboardButton'));
     const row = world.document.querySelectorAll('.panel-item')[0];
@@ -9443,7 +9485,8 @@ test('stroke menu item requires an explicit ready=true from hello', {since: '3.4
         stroke: true, japanese: true, french: true, russian: true } });
     ready.context.window.Feelime.toggleModeMenu();
     const item = [...ready.$('modeMenu').children][4];
-    equal(item.textContent, '笔笔画 Stroke', 'ready item leads with the shorthand');
+    const strokeLead = item.querySelector('.prep').textContent + item.querySelector('.mm-title').textContent;
+    equal(strokeLead, '笔笔画 Stroke', 'ready item leads with the shorthand');
     ready.tap(item);
     equal(ready.native.of('selectMode').filter(c => c.args[0] === 'stroke').length, 1,
         'ready item selects stroke');
@@ -9496,7 +9539,9 @@ test('handwriting: menu entry gated by strictReady (missing field = no entry)', 
         JSON.stringify(['direct', 'handwriting', 'pinyin']));
     ready.context.window.Feelime.toggleModeMenu();
     const readyItem = [...ready.$('modeMenu').children].find(el => el.textContent.includes('手写'));
-    equal(readyItem.textContent, '手手写 Handwriting', 'shorthand leads, title follows');
+    const hwLead = readyItem.querySelector('.prep').textContent
+        + readyItem.querySelector('.mm-title').textContent;
+    equal(hwLead, '手手写 Handwriting', 'shorthand leads, title follows');
     ready.tap(readyItem);
     equal(ready.native.of('selectMode').filter(c => c.args[0] === 'handwriting').length, 1,
         'ready handwriting selects');

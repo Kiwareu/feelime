@@ -218,7 +218,20 @@
         "拖动排序": "Drag to reorder",
         "暂无单字": "No single-character candidates",
         "暂无候选": "No candidates",
-        "剪贴板已开启，复制的内容将在这里显示": "Copied text will appear here.",
+        "剪贴板只留在这台手机上，不上传、不进云备份。条数不另设上限；全部正文大约 32MB，再大就存不下。": "Clipboard stays on this phone. It is not uploaded and is not in cloud backup. There is no fixed item cap; about 32MB of text total is the on-device ceiling.",
+        "条": "clips",
+        "全部": "All",
+        "未分组": "Ungrouped",
+        "＋分组": "＋ Group",
+        "分组名": "Group name",
+        "加入": "Add",
+        "移到分组": "Move to group",
+        "链接": "Link",
+        "邮箱": "Email",
+        "号码": "Number",
+        "数字": "Digits",
+        "收入自造词": "Save to my words",
+        "已收入自造词": "Saved to my words",
         "暂无常用语，点右上角「＋添加」": "No saved phrases. Tap Add to create one.",
         "…（内容过长）": "… (text truncated)",
         "组合过长，已清空": "Composition too long; cleared",
@@ -274,6 +287,20 @@
         "＋添加": "＋ Add",
         "松手结束": "Release to finish.",
         "点击任意位置结束": "Tap anywhere to finish.",
+        "请说较标准的普通话。标点由本机模型自动补上，声音不会上传": "Speak fairly standard Mandarin. Punctuation is added on-device; audio is never uploaded.",
+        "正在本机加载语音模型，声音不会上传": "Loading the on-device model. Audio is never uploaded.",
+        "正在整理这句话": "Cleaning up this phrase",
+        "请说较标准的普通话，松手后上屏": "Speak fairly standard Mandarin, then release to insert.",
+        "字母直接上屏": "Letters go straight in",
+        "全拼，空格选第一个词": "Pinyin; space picks the first word",
+        "声母韵母各一键": "Initial and final, one key each",
+        "九键，适合单手": "Nine keys, easier one-handed",
+        "按笔画顺序": "Stroke order",
+        "音形，需先导入码表": "Shape codes; import a table first",
+        "手写，识别有限": "Handwriting; recognition is limited",
+        "法语离线": "French, offline",
+        "俄语离线": "Russian, offline",
+        "罗马字": "Romaji",
         "取消语音输入": "Cancel voice input",
         "撤销本次听写": "Discard this dictation",
         "撤销": "Discard",
@@ -321,7 +348,7 @@
         });
     }
 
-    const KEYBOARD_VERSION = '3.73.79';
+    const KEYBOARD_VERSION = '3.74.6';
     // #39-12 收口：整屏级互斥视图注册表（单一事实源）。统计浮层、
     // 定制面板两轮同款叠层事故的根因是互关调用散装在各个 toggle 里，
     // 新视图忘了关所有人就叠加。现在：新视图在此登记一次（怎么判开、
@@ -569,7 +596,9 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
     ];
     // Over-long clipboard items cannot pass the native commitText limit, so
     // they render disabled in the panel (stored in full, paste blocked).
-    const MAX_COMMIT_CODE_POINTS = 2000;
+    // 粘贴上限：再大就容易把输入框和桥一次撑爆。条数不设上限，
+    // 全部正文大约 32MB，只存在本机。
+    const MAX_COMMIT_CODE_POINTS = 100000;
     // Cursor scrub: one caret step per 12px of drag at the default
     // 3x speed (SCRUB_UNIT_BASE_PX / scrubSpeed), counted after the fixed
     // recognition-threshold crossing. Exposes 1x..5x in the quick
@@ -606,6 +635,19 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
         'french': { label: 'FR', title: 'Français', layout: 'qwerty-fr', engine: true },
         'russian': { label: 'РУ', title: 'Русский', layout: 'cyrillic', engine: true },
         'japanese': { label: '日', title: '日本語 Romaji', layout: 'qwerty', engine: true },
+    };
+    // 模式菜单副文案（中文习惯叫法）。键是 t() 的中文原文。
+    const MODE_HINTS = {
+        'direct': '字母直接上屏',
+        'pinyin': '全拼，空格选第一个词',
+        'double-pinyin': '声母韵母各一键',
+        't9': '九键，适合单手',
+        'stroke': '按笔画顺序',
+        'flypy': '音形，需先导入码表',
+        'handwriting': '手写，识别有限',
+        'french': '法语离线',
+        'russian': '俄语离线',
+        'japanese': '罗马字',
     };
 
     const LAYOUTS = {
@@ -1527,6 +1569,8 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
             this.itemMenuOpen = null;
             this.panelEditItem = null;
             this.clipboardItems = [];
+            this.clipboardGroups = [];
+            this.clipGroupFilter = 'all';
             this.favoriteItems = [];
             this.popup = null;
             this.popupEndEvents = new WeakSet();
@@ -1641,6 +1685,7 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
             // 没有该字段时保持默认档 = 原始 13px 悬浮带）。加粗开关默认关。
             this.preeditFont = 0;
             this.preeditBold = false;
+            this.preeditFrame = false;
             // 单手模式（issue #15）：0=关 1=左手（键区贴左）2=右手；侧边条
             // 内容 0=光标控制 1=空白。背景图片（原「侧边图片」升级）：铺满
             // 整个键盘区域，bgImageEnabled 控制展示。
@@ -1654,7 +1699,8 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
             // 背景图亮/暗两组：各自独立，空串 = 该组无图（纯色背景）。
             this.bgImageLight = '';
             this.bgImageDark = '';
-            // 键帽不透明度（0-100，默认 100=不透明）。
+            // 键帽不透明度（0-100）。hello 缺字段时保持 100（旧壳契约）；
+            // 新壳默认下发 78，液态玻璃略透、文字仍实色。
             this.keyOpacity = 100;
             // #39 横屏三项（默认=铺满+避让安全区、上限 60%、不透明）。
             this.landscapeSafeArea = true;
@@ -2258,7 +2304,10 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
             document.getElementById('expandGrid').addEventListener('scroll', () => this.maybeLoadMoreCandidates());
             // The collapsed bar shares the pool - swiping it
             // near its end pulls the next page too.
-            document.getElementById('candidates').addEventListener('scroll', () => this.maybeLoadMoreCandidates());
+            document.getElementById('candidates').addEventListener('scroll', () => {
+                this.maybeLoadMoreCandidates();
+                this.schedulePinyinAlign();
+            });
             // Word-frequency vs single-char filter tabs.
             document.querySelectorAll('[data-expand-tab]').forEach(button => {
                 button.addEventListener('click', () => {
@@ -4204,11 +4253,14 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
             bubble.textContent = glyph;
             bubble.hidden = false;
             const rect = button.getBoundingClientRect();
-            // 与 openPopup 同一套钳制：水平贴边收拢，垂直不越出视口顶。
-            const left = Math.max(4, Math.min(innerWidth - bubble.offsetWidth - 4,
-                rect.left + rect.width / 2 - bubble.offsetWidth / 2));
+            const w = bubble.offsetWidth || 48;
+            const h = bubble.offsetHeight || 54;
+            // 始终放在按键正上方，绝不落到按键下缘或键盘底部。
+            const left = Math.max(4, Math.min(innerWidth - w - 4,
+                rect.left + rect.width / 2 - w / 2));
+            const top = rect.top > 12 ? Math.max(2, rect.top - h - 8) : rect.top - h - 8;
             bubble.style.left = left + 'px';
-            bubble.style.top = Math.max(2, rect.top - bubble.offsetHeight - 6) + 'px';
+            bubble.style.top = top + 'px';
         }
 
         /** flick 判定后把气泡换成实际将上屏的字符（键位不动，仅换文字）。 */
@@ -7229,7 +7281,8 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
          * #8): the rows shrink by 4/8/11 against the old 14px base. */
         layoutChrome() {
             const bandExtra = this.preeditFont === 2 ? 11 : this.preeditFont === 1 ? 8 : 4;
-            return (this.landscape ? 78 : 86) + bandExtra;
+            /* 竖屏行距 5→7px，三道缝多 6px，从内容预算里扣掉，避免末行被挤出。 */
+            return (this.landscape ? 82 : 92) + bandExtra;
         }
 
         /** Read the native view's total height back as content height. The
@@ -7387,6 +7440,25 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
             const color = wallpaper || !host ? 'transparent'
                 : getComputedStyle(host).backgroundColor;
             try { Native.setChromeColor(color, this.token); } catch (_) { /* bridge absent */ }
+        }
+
+        /** 液态玻璃：模糊、圆角、面板通透度。缺省字段保持 CSS 默认。 */
+        applyGlass(payload) {
+            const root = document.documentElement.style;
+            const blur = Number(payload && payload.glassBlur);
+            if (Number.isFinite(blur) && blur >= 0 && blur <= 32) {
+                root.setProperty('--glass-blur', Math.round(blur) + 'px');
+            }
+            const radius = Number(payload && payload.glassRadius);
+            if (Number.isFinite(radius) && radius >= 8 && radius <= 28) {
+                const rounded = Math.round(radius);
+                root.setProperty('--radius-key', rounded + 'px');
+                root.setProperty('--radius-card', Math.round(rounded * 1.35) + 'px');
+            }
+            const panel = Number(payload && payload.panelOpacity);
+            if (Number.isFinite(panel) && panel >= 35 && panel <= 100) {
+                root.setProperty('--panel-alpha', String(panel / 100));
+            }
         }
 
         /** 键帽不透明度：只动背景 alpha 变量，键帽文字保持实色。 */
@@ -8339,7 +8411,10 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
                 button.className = current ? 'current' : (ready ? '' : 'preparing');
                 // Compact rows - the shorthand leads, the full
                 // title follows (left aligned, no trailing blank).
-                button.innerHTML = `<span class="prep">${ready ? modeLabel(name) : '…'}</span><span>${t(config.title)}</span>`;
+                const hint = MODE_HINTS[name] ? t(MODE_HINTS[name]) : '';
+                button.innerHTML = `<span class="prep">${ready ? modeLabel(name) : '…'}</span>` +
+                    `<span class="mm-copy"><span class="mm-title">${t(config.title)}</span>` +
+                    (hint ? `<span class="mm-hint">${hint}</span>` : '') + `</span>`;
                 if (ready && !current) {
                     button.addEventListener('click', () => {
                         this.closeModeMenu();
@@ -10122,7 +10197,13 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
             ordered.forEach((candidate, index) => {
                 if (appendOnly && index < existing.length) return;
                 const button = document.createElement('button');
-                button.className = index === 0 ? 'candidate first' : 'candidate';
+                const latin = ['pinyin', 'double-pinyin', 't9'].includes(this.mode)
+                    && typeof labels[index] === 'string'
+                    && labels[index].length >= 2
+                    && /^[A-Za-z][A-Za-z0-9]*$/.test(labels[index]);
+                button.className = 'candidate'
+                    + (index === 0 ? ' first' : '')
+                    + (latin ? ' en-mix' : '');
                 button.textContent = labels[index];
                 button._poolCandidate = candidate;
                 let longPressed = false;
@@ -10151,6 +10232,106 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
             // A pool shorter than the bar can never be scrolled, so keep
             // pulling pages until the strip overflows (endless drag ready).
             if (!this.expanded) this.maybeLoadMoreCandidates();
+            this.schedulePinyinAlign();
+        }
+
+        /** 全拼切成音节。已是完整音节的取最长，切不开的字母单独留下。 */
+        pinyinPieces(raw) {
+            const text = String(raw || '').trim();
+            if (!text) return [];
+            if (this.mode === 't9') {
+                const reading = this.t9Reading();
+                return reading ? reading.split(/['\s]+/).filter(Boolean) : [];
+            }
+            if (this.mode === 'double-pinyin') {
+                const compact = text.replace(/[^a-z]/gi, '');
+                const out = [];
+                for (let i = 0; i < compact.length; i += 2) out.push(compact.slice(i, i + 2));
+                return out;
+            }
+            if (this.mode !== 'pinyin') return [];
+            const out = [];
+            const chunks = text.split(/[^a-zA-Züv]+/);
+            chunks.forEach(chunk => {
+                const lower = chunk.toLowerCase();
+                let i = 0;
+                while (i < lower.length) {
+                    let best = 0;
+                    const max = Math.min(6, lower.length - i);
+                    for (let len = 1; len <= max; len++) {
+                        const slice = lower.slice(i, i + len);
+                        if (FULL_PINYIN_SYLLABLES_SET.has(slice)) best = len;
+                        else if (!FULL_PINYIN_SYLLABLES.some(value => value.startsWith(slice))) break;
+                    }
+                    if (best) {
+                        out.push(lower.slice(i, i + best));
+                        i += best;
+                    } else {
+                        out.push(lower.slice(i, i + 1));
+                        i += 1;
+                    }
+                }
+            });
+            return out;
+        }
+
+        schedulePinyinAlign() {
+            if (typeof requestAnimationFrame !== 'function') return;
+            if (this._pyAlign) cancelAnimationFrame(this._pyAlign);
+            this._pyAlign = requestAnimationFrame(() => this.alignPinyin());
+        }
+
+        /** 每个音节落在对应汉字正上方，不再整串贴在键盘最左边。 */
+        alignPinyin() {
+            this._pyAlign = 0;
+            const line = document.getElementById('preeditLine');
+            if (!line) return;
+            line.querySelectorAll('.py-slot').forEach(node => node.remove());
+            line.classList.remove('aligned');
+            document.body.classList.remove('preedit-aligned');
+            document.querySelectorAll('.ruby-target').forEach(node => node.classList.remove('ruby-target'));
+            if (!this.composing || this.preeditFrame) return;
+            const rawEl = line.querySelector('.preedit-raw');
+            const pieces = this.pinyinPieces(rawEl ? rawEl.textContent : '');
+            const cand = document.querySelector('#candidates .candidate');
+            const host = document.getElementById('softKeyboard');
+            if (!pieces.length || !cand || !host || !cand.firstChild || cand.firstChild.nodeType !== 3) return;
+            cand.classList.add('ruby-target');
+            void cand.offsetWidth;
+            const hostRect = host.getBoundingClientRect();
+            if (!hostRect.width) return;
+            const chars = Array.from(cand.textContent);
+            const node = cand.firstChild;
+            const range = document.createRange();
+            let placed = 0;
+            pieces.forEach((piece, index) => {
+                let center = null;
+                if (index < chars.length) {
+                    const start = chars.slice(0, index).join('').length;
+                    const end = start + chars[index].length;
+                    if (end <= node.length) {
+                        range.setStart(node, start);
+                        range.setEnd(node, end);
+                        const rect = range.getBoundingClientRect();
+                        if (rect.width > 0) center = rect.left + rect.width / 2 - hostRect.left;
+                    }
+                }
+                if (center == null) {
+                    const rect = cand.getBoundingClientRect();
+                    center = rect.right - hostRect.left + 16 + (index - chars.length) * 28;
+                }
+                const slot = document.createElement('span');
+                slot.className = 'py-slot';
+                slot.setAttribute('aria-hidden', 'true');
+                slot.textContent = piece;
+                slot.style.left = Math.max(12, Math.min(hostRect.width - 12, center)) + 'px';
+                line.append(slot);
+                placed += 1;
+            });
+            if (placed) {
+                line.classList.add('aligned');
+                document.body.classList.add('preedit-aligned');
+            }
         }
 
         /** M4 composing chrome: preedit line, toolbar swap, enter label. */
@@ -10198,12 +10379,21 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
             // 回声未到时 raw 仍不含 *，会放进第二个 *）。
             this.wildcardInFlight = false;
             document.body.classList.toggle('composing', this.composing);
+            document.body.classList.toggle('preedit-frame', !!this.preeditFrame);
             const preedit = document.getElementById('preeditLine');
-            preedit.textContent = this.composing
+            const reading = this.composing
                 ? (this.mode === 't9'
                     ? (this.t9Reading() || this.t9PreeditLabel(this.lastRawInput))
                     : this.lastRawInput)
                 : '';
+            preedit.replaceChildren();
+            if (reading) {
+                const raw = document.createElement('span');
+                raw.className = 'preedit-raw';
+                raw.textContent = reading;
+                preedit.append(raw);
+            }
+            this.schedulePinyinAlign();
             if (!this.composing) {
                 this.t9ConfirmedLen = 0;
                 this._t9ConfirmedText = '';
@@ -10483,14 +10673,75 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
             }
         }
 
+        /** 剪贴板面板标题上的总数。工具栏图标不显示条数。 */
+        syncClipTotal() {
+            const el = document.getElementById('clipTotal');
+            if (!el) return;
+            const on = this.panelOpen && this.panelTab === 'clipboard';
+            el.hidden = !on;
+            if (!on) return;
+            el.textContent = (this.clipboardItems || []).length + ' ' + t('条');
+        }
+
         renderPanel() {            const list = document.getElementById('panelList');
             // #67 颜文字 tab：分类 chips + 网格（静态数据，不走剪贴板/
             // 常用语的条目模型——上屏走 commitText（是输入，进统计）。
+            this.syncClipTotal();
             if (this.panelTab === 'kaomoji') { this.renderKaomoji(); return; }
             const empty = document.getElementById('panelEmpty');
             list.replaceChildren();
             const layer = document.getElementById('panelLayer');
-            const items = this.panelTab === 'clipboard' ? this.clipboardItems : this.favoriteItems;
+            let items = this.panelTab === 'clipboard' ? this.clipboardItems : this.favoriteItems;
+            if (this.panelTab === 'clipboard') {
+                const bar = document.createElement('div');
+                bar.className = 'clip-groups';
+                const filters = [['all', t("全部")], ['', t("未分组")]]
+                    .concat((this.clipboardGroups || []).map(name => [name, name]));
+                filters.forEach(([id, label]) => {
+                    const chip = document.createElement('button');
+                    chip.type = 'button';
+                    chip.className = 'clip-chip' + (this.clipGroupFilter === id ? ' on' : '');
+                    chip.textContent = label;
+                    chip.addEventListener('click', event => {
+                        event.stopPropagation();
+                        this.clipGroupFilter = id;
+                        this.renderPanel();
+                    });
+                    bar.append(chip);
+                });
+                const adder = document.createElement('button');
+                adder.type = 'button';
+                adder.className = 'clip-chip';
+                adder.textContent = t("＋分组");
+                adder.addEventListener('click', event => {
+                    event.stopPropagation();
+                    if (bar.querySelector('.clip-group-input')) return;
+                    const input = document.createElement('input');
+                    input.className = 'phrase-input clip-group-input';
+                    input.maxLength = 16;
+                    input.placeholder = t("分组名");
+                    input.addEventListener('focus', () => this.setPanelInput(true));
+                    const commitName = () => {
+                        const name = input.value.trim();
+                        if (name && typeof Native.addClipboardGroup === 'function') {
+                            this.call(() => Native.addClipboardGroup(name, this.token));
+                        }
+                        if (!this.phraseCardOpen()) this.setPanelInput(false);
+                        input.remove();
+                    };
+                    input.addEventListener('keydown', event => {
+                        if (event.key === 'Enter') commitName();
+                    });
+                    input.addEventListener('blur', () => setTimeout(commitName, 180));
+                    bar.append(input);
+                    input.focus();
+                });
+                bar.append(adder);
+                list.append(bar);
+                const filter = this.clipGroupFilter;
+                if (filter === '') items = items.filter(item => !item.group);
+                else if (filter && filter !== 'all') items = items.filter(item => item.group === filter);
+            }
             empty.hidden = items.length > 0;
             // 空态不铺整块列表背景（验收反馈）：列表收起、提示只占一行，
             // 其余空间透出键盘背景，不再是一大块空面板。
@@ -10498,7 +10749,7 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
             else layer.dataset.empty = '1';
             if (!items.length) {
                 empty.textContent = this.panelTab === 'clipboard'
-                    ? t("剪贴板已开启，复制的内容将在这里显示")
+                    ? t("剪贴板只留在这台手机上，不上传、不进云备份。条数不另设上限；全部正文大约 32MB，再大就存不下。")
                     : t("暂无常用语，点右上角「＋添加」");
                 return;
             }
@@ -10545,7 +10796,43 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
                         event.stopPropagation();
                         this.call(() => Native.removeClipboard(item.id, this.token));
                     });
-                    row.append(preview, remove);
+                    const body = document.createElement('span');
+                    body.className = 'clip-body';
+                    body.append(preview);
+                    const pieces = this.clipPieces(item.text);
+                    if (pieces.length) {
+                        const extracts = document.createElement('span');
+                        extracts.className = 'clip-extracts';
+                        pieces.forEach(piece => {
+                            const chip = document.createElement('button');
+                            chip.type = 'button';
+                            chip.className = 'clip-extract';
+                            chip.textContent = t(piece.kind) + ' ' + (piece.value.length > 28
+                                ? piece.value.slice(0, 28) + '…' : piece.value);
+                            chip.addEventListener('click', event => {
+                                event.stopPropagation();
+                                this.call(() => {
+                                    if (typeof Native.pasteText === 'function') {
+                                        Native.pasteText(piece.value, this.token);
+                                    } else {
+                                        Native.commitText(piece.value, this.token);
+                                    }
+                                });
+                                this.closePanel();
+                            });
+                            extracts.append(chip);
+                        });
+                        body.append(extracts);
+                    }
+                    const groupBtn = document.createElement('button');
+                    groupBtn.type = 'button';
+                    groupBtn.className = 'clip-extract';
+                    groupBtn.textContent = item.group || t("移到分组");
+                    groupBtn.addEventListener('click', event => {
+                        event.stopPropagation();
+                        this.openClipGroupMenu(item, groupBtn);
+                    });
+                    row.append(body, groupBtn, remove);
                     // Native clicks only: bindTouch's preventDefault would kill
                     // panel scrolling AND bubble a second row click on remove taps
                     // .
@@ -11031,6 +11318,13 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
                 });
                 menu.append(button);
             };
+            const han = String(candidate.text || '');
+            if (han.length >= 2 && han.length <= 8 && /^[\u4e00-\u9fff]+$/.test(han) &&
+                typeof Native.learnUserWord === 'function') {
+                build(t("收入自造词"), '', () => {
+                    this.call(() => Native.learnUserWord(han, this.token));
+                });
+            }
             if (deletable) {
                 build(t("删除自造词"), 'danger', () => this.confirmDeleteCandidate(candidate));
             } else {
@@ -11121,10 +11415,59 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
         }
 
         onClipboard(payload) {
+            this.clipboardGroups = Array.isArray(payload.groups) ? payload.groups.map(String) : [];
             this.clipboardItems = (payload.items || []).map(item => ({
                 id: String(item.id), text: String(item.text), time: Number(item.time) || 0,
+                group: String(item.group || ''),
             }));
             if (this.panelOpen && this.panelTab === 'clipboard') this.renderPanel();
+        }
+
+        onLearnNote(payload) {
+            const text = payload && payload.text;
+            if (text) this.showToast(String(text));
+        }
+
+        /** 从一段混杂文本里拆出链接、邮箱、号码和连续中文。整段本身不算。 */
+        clipPieces(text) {
+            const source = String(text || '');
+            const found = [];
+            const seen = new Set();
+            const add = (kind, value) => {
+                const clean = String(value || '').trim().replace(/[),.;，。、]+$/u, '');
+                if (clean.length < 2 || seen.has(kind + '\n' + clean)) return;
+                if (clean === source.trim()) return;
+                seen.add(kind + '\n' + clean);
+                found.push({ kind, value: clean });
+            };
+            for (const match of source.matchAll(/https?:\/\/[^\s<>"'，。]+/g)) add('链接', match[0]);
+            for (const match of source.matchAll(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g)) add('邮箱', match[0]);
+            for (const match of source.matchAll(/1[3-9]\d{9}/g)) add('号码', match[0]);
+            for (const match of source.matchAll(/\d{4,}/g)) add('数字', match[0]);
+            const han = source.match(/[\u4e00-\u9fff]{2,}/g) || [];
+            han.slice(0, 3).forEach(part => add('中文', part));
+            return found.slice(0, 6);
+        }
+
+        openClipGroupMenu(item, anchor) {
+            const menu = document.getElementById('itemMenu');
+            this.closeItemMenu();
+            const choices = [''].concat(this.clipboardGroups || []);
+            choices.forEach(name => {
+                const button = document.createElement('button');
+                button.textContent = name || t("未分组");
+                button.addEventListener('click', () => {
+                    this.closeItemMenu();
+                    if (typeof Native.setClipboardGroup === 'function') {
+                        this.call(() => Native.setClipboardGroup(item.id, name, this.token));
+                    }
+                });
+                menu.append(button);
+            });
+            menu.classList.add('open');
+            const rect = anchor.getBoundingClientRect();
+            menu.style.left = Math.max(4, rect.left) + 'px';
+            menu.style.top = Math.max(4, rect.top - 8) + 'px';
         }
 
         /** 导入备份后原生把 localStorage 级设置推回来（userdata.md §1.4）。
@@ -11270,7 +11613,11 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
             if (typeof payload.preeditBold === 'boolean') {
                 this.preeditBold = payload.preeditBold;
             }
+            if (typeof payload.preeditFrame === 'boolean') {
+                this.preeditFrame = payload.preeditFrame;
+            }
             document.body.dataset.preeditBold = this.preeditBold ? '1' : '0';
+            document.body.classList.toggle('preedit-frame', !!this.preeditFrame);
             // 单手模式（issue #15）：0=关 1=左手 2=右手；旧 APK 不带字段不覆盖。
             if (Number(payload.oneHand) in { 0: 1, 1: 1, 2: 1 }) {
                 this.oneHand = Number(payload.oneHand);
@@ -11306,6 +11653,7 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
             this.applyOneHand();
             this.applyBackground();
             this.applyKeyOpacity();
+            this.applyGlass(payload);
             this.applyLandscapeChrome();
             // #31 预置色调：native pref 经 hello 下发，html[data-preset]
             // 驱动 CSS 覆盖（classic = 清掉 dataset 回默认绿）。
@@ -12055,6 +12403,16 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
                     : this.voiceSession === 'space-hold'
                         ? t("松手上屏")
                         : t("点击任意位置结束");
+            const guide = document.getElementById('voiceGuide');
+            if (guide) {
+                guide.textContent = this.voiceState === 'loading'
+                    ? t("正在本机加载语音模型，声音不会上传")
+                    : this.voiceState === 'stopping'
+                        ? t("正在整理这句话")
+                        : this.voiceSession === 'space-hold'
+                            ? t("请说较标准的普通话，松手后上屏")
+                            : t("请说较标准的普通话。标点由本机模型自动补上，声音不会上传");
+            }
             if (payload.message && this.voiceState === 'error') {
                 document.getElementById('voiceStatus').textContent = payload.message;
             }
@@ -12261,6 +12619,7 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
         // 工具位（debugState 同类）：自定义行缩放器，mock/预览直调锁数值。
         fitCustomRow: strip => keyboard.fitCustomRow(strip),
         onClipboard: payload => keyboard.onClipboard(payload),
+        onLearnNote: payload => keyboard.onLearnNote(payload),
         onFavorites: payload => keyboard.onFavorites(payload),
         onStoresRestored: stores => keyboard.onStoresRestored(stores),
         onPanelCommit: payload => keyboard.onPanelCommit(payload),
@@ -12406,6 +12765,7 @@ const TOOLBAR_DEFAULT = { left: ['ctrl', 'ime'], right: ['clipboard', 'favorites
         // Suite hook: the real theme-switch entry (toolbar tool / quick
         // tile route through it too).
         cycleTheme: () => keyboard.cycleTheme(),
+        pinyinPieces: raw => keyboard.pinyinPieces(raw),
         // Suite/preview hook: re-evaluate the theme→image mapping after
         // switching html theme classes directly (applyTheme does this in
         // real flows).
