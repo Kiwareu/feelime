@@ -1,5 +1,11 @@
 # Feelime Keyboard
 
+This repository is a modified, unofficial build based on upstream
+[Feelime](https://github.com/feelime/feelime). It is not the official
+original. Source and releases are under [GPL-3.0](LICENSE). Upstream
+LICENSE and copyright notices are kept.
+This fork: <https://github.com/Kiwareu/feelime>
+
 **Feelime** is an open-source, fully offline keyboard for Android with a
 modern interface and built-in voice input. The keyboard area is rendered
 with local HTML/CSS/JavaScript and talks to Android's `InputConnection`
@@ -9,7 +15,7 @@ pause segment is re-decoded by a bilingual Paraformer for final correction,
 followed by local punctuation and English casing/contraction restoration.
 Everything runs on the device.
 
-**Open** · completely open source (MIT) and free. The keyboard UI is plain
+**Open** · completely open source (GPL-3.0) and free. The keyboard UI is plain
 HTML/CSS/JS under `app/src/main/assets/keyboard/` — customize the look or
 rebuild a layout without repacking the APK (debug builds accept unsigned
 hot-update packages and instant local pushes).
@@ -60,8 +66,10 @@ time. Regenerate via the pinned pipeline — see
 
 The full APK ships with voice models; `-PfeelimeModels=thin` builds a slim
 APK that downloads models on first use (in-app, offline afterwards).
-Enable Feelime in the system input-method settings and grant the
-microphone permission.
+Packages built from this fork are modified unofficial builds, not upstream
+Feelime releases. The debug package name is `com.feelime.ime.dev` and can
+be installed beside the official `com.feelime.ime`. Enable Feelime Dev in
+the system input-method settings and grant the microphone permission.
 
 ## Customizing the keyboard / hot updates
 

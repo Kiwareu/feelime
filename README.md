@@ -1,5 +1,9 @@
 # Feelime 输入法
 
+本仓库是上游 [Feelime](https://github.com/feelime/feelime) 的修改版，不是官方原版。
+源码与发布均以 [GPL-3.0](LICENSE) 提供，并保留上游 LICENSE 与版权声明。
+本 fork：<https://github.com/Kiwareu/feelime>
+
 > **Feelime** is an open-source, fully offline Android keyboard with modern
 > visuals and built-in voice input. Everything — keystrokes, candidates,
 > speech recognition — stays on your device.
@@ -45,6 +49,9 @@ Android SDK）：
 ANDROID_HOME=… ./gradlew :app:assembleDirectDebug
 adb install -r app/build/outputs/apk/direct/debug/app-direct-debug.apk
 ```
+
+由此打出的包是本 fork 的修改版，不是上游官方包。调试包名是
+`com.feelime.ime.dev`，可以和官方 `com.feelime.ime` 同时安装。
 
 词典引擎数据（中文/西文/日语，约 52MB）随仓库分发，构建时
 `checkEngineArtifacts` 逐文件核对 SHA-256；再生成用 pinned 管线，见
